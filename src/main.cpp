@@ -5,16 +5,12 @@
 #include "SPIFFS.h"
 #include <Arduino_JSON.h>
 
-// Replace with your network credentials
-const char* ssid = "INFINITUM01B6_2.4";
-const char* password = "Tp6Cy6Us1r";
+const char* ssid = "Xiaomi_7D23";
+const char* password = "1234567890";
 
-// Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
-// Create a WebSocket object
-
 AsyncWebSocket ws("/ws");
-// Set LED GPIO
+
 const int ledPin1 = 12;
 const int ledPin2 = 13;
 const int ledPin3 = 14;
@@ -28,7 +24,6 @@ int dutyCycle1;
 int dutyCycle2;
 int dutyCycle3;
 
-// setting PWM properties
 const int freq = 5000;
 const int ledChannel1 = 0;
 const int ledChannel2 = 1;
@@ -36,10 +31,8 @@ const int ledChannel3 = 2;
 
 const int resolution = 8;
 
-//Json Variable to Hold Slider Values
 JSONVar sliderValues;
 
-//Get Slider Values
 String getSliderValues(){
   sliderValues["sliderValue1"] = String(sliderValue1);
   sliderValues["sliderValue2"] = String(sliderValue2);
@@ -49,7 +42,6 @@ String getSliderValues(){
   return jsonString;
 }
 
-// Initialize SPIFFS
 void initFS() {
   if (!SPIFFS.begin()) {
     Serial.println("An error has occurred while mounting SPIFFS");
@@ -59,7 +51,6 @@ void initFS() {
   }
 }
 
-// Initialize WiFi
 void initWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -137,12 +128,10 @@ void setup() {
   initFS();
   initWiFi();
 
-  // configure LED PWM functionalitites
   ledcSetup(ledChannel1, freq, resolution);
   ledcSetup(ledChannel2, freq, resolution);
   ledcSetup(ledChannel3, freq, resolution);
 
-  // attach the channel to the GPIO to be controlled
   ledcAttachPin(ledPin1, ledChannel1);
   ledcAttachPin(ledPin2, ledChannel2);
   ledcAttachPin(ledPin3, ledChannel3);
@@ -150,14 +139,19 @@ void setup() {
 
   initWebSocket();
   
-  // Web Server Root URL
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/login.html", "text/html");
+  });
+
+  server.on("/leds", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html", "text/html");
+  });
+
+  server.on("/update.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/uploadbin.html", "text/html");
   });
   
   server.serveStatic("/", SPIFFS, "/");
-
-  // Start server
   server.begin();
 
 }
