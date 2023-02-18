@@ -2,13 +2,14 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <AsyncElegantOTA.h>
 #include "SPIFFS.h"
 #include <Arduino_JSON.h>
 
 const char* ssid = "Xiaomi_7D23";
 const char* password = "1234567890";
 
-AsyncWebServer server(80);
+AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
 
 const int ledPin1 = 12;
@@ -54,12 +55,17 @@ void initFS() {
 void initWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi ..");
+
+  Serial.print("Connecting to WiFi");
+
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print('.');
     delay(1000);
   }
+
+  Serial.printf("\nConnected to %c \n", &ssid);
   Serial.println(WiFi.localIP());
+  Serial.println(WiFi.macAddress());
 }
 
 void notifyClients(String sliderValues) {
@@ -140,17 +146,10 @@ void setup() {
   initWebSocket();
   
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/login.html", "text/html");
-  });
-
-  server.on("/leds", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html", "text/html");
   });
-
-  server.on("/update.html", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/uploadbin.html", "text/html");
-  });
   
+  AsyncElegantOTA.begin(&server,"admin","Abraham456..");
   server.serveStatic("/", SPIFFS, "/");
   server.begin();
 
