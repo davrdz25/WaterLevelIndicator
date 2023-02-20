@@ -11,14 +11,14 @@
 long duration;
 float distanceCm;
 
-const char* ssid = "INFINITUM01B6_2.4";
-const char* password = "Tp6Cy6Us1r";
+/* const char* ssid = "INFINITUM01B6_2.4";
+const char* password = "Tp6Cy6Us1r"; */
 const char* hostname = "ESP32Server";
 
-/* 
+
 const char* ssid = "Xiaomi_7D23";
 const char* password = "1234567890";
- */
+
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
