@@ -1,17 +1,19 @@
 #include <Arduino.h>
 #include <WiFi.h>
-#include <HTTPSServer.hpp>
-#include <SSLCert.hpp>
-#include <HTTPRequest.hpp>
-#include <HTTPResponse.hpp>
 #include <AsyncTCP.h>
-#include <ESPAsyncWebServer.h>
 #include <AsyncElegantOTA.h>
 #include "SPIFFS.h"
 #include <Arduino_JSON.h>
+#include <ESPAsyncTCP.h>
 
+const char* ssid = "INFINITUMB106_2.4";
+const char* password = "Tp6Cy6Us1r";
+const char* hostname = "ESP32Server";
+
+/* 
 const char* ssid = "Xiaomi_7D23";
 const char* password = "1234567890";
+ */
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
@@ -59,6 +61,7 @@ void initFS() {
 void initWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
+  WiFi.hostname(hostname);
 
   Serial.print("Connecting to WiFi");
 
@@ -70,6 +73,8 @@ void initWiFi() {
   Serial.printf("\nConnected to %c \n", &ssid);
   Serial.println(WiFi.localIP());
   Serial.println(WiFi.macAddress());
+  Serial.println(WiFi.getHostname());
+
 }
 
 void notifyClients(String sliderValues) {
