@@ -4,9 +4,8 @@
 #include <AsyncElegantOTA.h>
 #include "SPIFFS.h"
 #include <Arduino_JSON.h>
-#include <ESPAsyncTCP.h>
 
-const char* ssid = "INFINITUMB106_2.4";
+const char* ssid = "INFINITUM01B6_2.4";
 const char* password = "Tp6Cy6Us1r";
 const char* hostname = "ESP32Server";
 
