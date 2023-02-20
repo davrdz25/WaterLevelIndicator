@@ -5,6 +5,12 @@
 #include "SPIFFS.h"
 #include <Arduino_JSON.h>
 
+#define SOUND_SPEED 0.034
+#define CM_TO_INCH 0.393701
+
+long duration;
+float distanceCm;
+
 const char* ssid = "INFINITUM01B6_2.4";
 const char* password = "Tp6Cy6Us1r";
 const char* hostname = "ESP32Server";
@@ -34,15 +40,31 @@ const int freq = 5000;
 const int ledChannel1 = 0;
 const int ledChannel2 = 1;
 const int ledChannel3 = 2;
-
 const int resolution = 8;
+const int relayPin = 21;
+const int echoPin = 22;
+const int triggPin = 23;
 
 JSONVar sliderValues;
 
+
 String getSliderValues(){
+  digitalWrite(23, LOW);
+  delayMicroseconds(2);
+  digitalWrite(23, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(23, LOW);
+  
+  duration = pulseIn(echoPin, HIGH);
+  distanceCm = duration * SOUND_SPEED/2;
+
+  Serial.println(distanceCm);
+
   sliderValues["sliderValue1"] = String(sliderValue1);
   sliderValues["sliderValue2"] = String(sliderValue2);
   sliderValues["sliderValue3"] = String(sliderValue3);
+  sliderValues["WaterDistance"] = String(distanceCm);
+
 
   String jsonString = JSON.stringify(sliderValues);
   return jsonString;
@@ -85,6 +107,8 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
     message = (char*)data;
+    Serial.println(message);
+
     if (message.indexOf("1s") >= 0) {
       sliderValue1 = message.substring(2);
       dutyCycle1 = map(sliderValue1.toInt(), 0, 100, 0, 255);
@@ -106,11 +130,18 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       Serial.print(getSliderValues());
       notifyClients(getSliderValues());
     }
+    if (message.indexOf("WD") >= 0) {
+      Serial.println(getSliderValues());
+      Serial.print(getSliderValues());
+      notifyClients(getSliderValues());
+    }
+
     if (strcmp((char*)data, "getValues") == 0) {
       notifyClients(getSliderValues());
     }
   }
 }
+
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
   switch (type) {
     case WS_EVT_CONNECT:
@@ -139,6 +170,11 @@ void setup() {
   pinMode(ledPin1, OUTPUT);
   pinMode(ledPin2, OUTPUT);
   pinMode(ledPin3, OUTPUT);
+
+  pinMode(relayPin, OUTPUT);
+  pinMode(triggPin, OUTPUT); 
+  pinMode(echoPin, INPUT);
+
   initFS();
   initWiFi();
 
@@ -151,14 +187,14 @@ void setup() {
   ledcAttachPin(ledPin3, ledChannel3);
 
 
-  initWebSocket();
-  
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html", "text/html");
   });
   
   AsyncElegantOTA.begin(&server,"admin","Abraham456..");
   server.serveStatic("/", SPIFFS, "/");
+
+  initWebSocket();
   server.begin();
 
 }

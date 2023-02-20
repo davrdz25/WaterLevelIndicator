@@ -1,4 +1,4 @@
-var gateway = `ws://${window.location.hostname}/ws`;
+var gateway = `ws://${window.location.hostname}:8081/ws`;
 var websocket;
 window.addEventListener('load', onload);
 
@@ -36,6 +36,13 @@ function updateSliderPWM(element) {
     websocket.send(sliderNumber+"s"+sliderValue.toString());
 }
 
+function updateDistance(element) {
+    var waterLevel = document.getElementById(element.id).value;
+    document.getElementById("waterLevelValue").innerHTML = waterLevel;
+    console.log(sliderValue);
+    websocket.send("WD");
+}
+
 function onMessage(event) {
     console.log(event.data);
     var myObj = JSON.parse(event.data);
@@ -45,5 +52,6 @@ function onMessage(event) {
         var key = keys[i];
         document.getElementById(key).innerHTML = myObj[key];
         document.getElementById("slider"+ (i+1).toString()).value = myObj[key];
+        document.getElementById("waterLevelValue").value = myObj["WaterDistance"]
     }
 }
