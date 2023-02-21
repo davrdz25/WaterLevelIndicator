@@ -48,22 +48,23 @@ function onMessage(event) {
     var myObj = JSON.parse(event.data);
     var keys = Object.keys(myObj);
 
-    for (var i = 0; i < keys.length - 1; i++){
-        var key = keys[i];
-
-        if(document.getElementById("slider"+ (i+1).toString()) == "slider"+ (i+1).toString())
-        {
-            document.getElementById(key).innerHTML = myObj[key];
-            document.getElementById("slider"+ (i+1).toString()).value = myObj[key];
-        } 
-        else 
-        {
-            document.getElementById("waterLevel").innerHTML = myObj["WaterDistance"];
-            document.getElementById("waterLevel").value = myObj["WaterDistance"];
+    if(document.getElementById("waterLevel").id != "waterLevel")
+    {
+        for (var i = 0; i < keys.length - 1; i++){
+            var key = keys[i];
+    
+            
+                document.getElementById(key).innerHTML = myObj[key];
+                document.getElementById("slider"+ (i+1).toString()).value = myObj[key];
         }
+    }
+    else 
+    {
+        document.getElementById("waterLevel").innerHTML = myObj["WaterDistance"];
+        document.getElementById("waterLevel").value = myObj["WaterDistance"];
     }
 }
 
 var interval = setInterval(function(){
     updateInputDistance(document.getElementById("waterLevel"))
-},1000)
+},60000)
