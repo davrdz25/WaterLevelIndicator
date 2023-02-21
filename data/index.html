@@ -38,10 +38,13 @@
                 </p>
                 <p class="state">Brightness: <span id="sliderValue3"></span> &percnt;</p>
             </div>
-
             <div class="card">
-                <p class="card-title">Water distance</p>
-                <p class="state">Distance: <span id="waterLevelValue" onclick="updateDistance(this)" ></span> cm</p>
+                <p class="card-title"> Fader 3</p>
+                <p class="switch">
+                    <input onshow="updateDistance(this)" id="waterLevel" min="0" max="100" step="1"
+                        value="0" >
+                </p>
+                <p class="state">Brightness: <span id="level"></span> &percnt;</p>
             </div>
         </div>
     </div>

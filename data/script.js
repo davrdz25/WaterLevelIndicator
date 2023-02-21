@@ -1,5 +1,7 @@
 var gateway = `ws://${window.location.hostname}:8081/ws`;
 var websocket;
+var nIntervId;
+
 window.addEventListener('load', onload);
 
 function onload(event) {
@@ -36,22 +38,23 @@ function updateSliderPWM(element) {
     websocket.send(sliderNumber+"s"+sliderValue.toString());
 }
 
-function updateDistance(element) {
-    var waterLevel = document.getElementById(element.id).value;
-    document.getElementById("waterLevelValue").innerHTML = waterLevel;
-
-    websocket.send("WD");
-}
-
-
-
 function onMessage(event) {
     var myObj = JSON.parse(event.data);
     var keys = Object.keys(myObj);
 
-    for (var i = 0; i < keys.length; i++){
+    for (var i = 0; i < keys.length - 1; i++){
         var key = keys[i];
+        
         document.getElementById(key).innerHTML = myObj[key];
         document.getElementById("slider"+ (i+1).toString()).value = myObj[key];
     }
+}
+
+function getCurrentDistance(event)
+{
+    var myObj = JSON.parse(event.data);
+    var keys = Object.keys(myObj);
+
+    document.getElementById("waterLevel").innerHTML = myObj["WaterDistance"];
+    document.getElementById("waterLevel").value = parseFloat(myObj["WaterDistance"]);
 }
