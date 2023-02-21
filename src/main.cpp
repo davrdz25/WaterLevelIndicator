@@ -58,6 +58,7 @@ String getSliderValues(){
   duration = pulseIn(echoPin, HIGH);
   distanceCm = duration * SOUND_SPEED/2;
 
+  Serial.print("Get distance");
   Serial.println(distanceCm);
 
   sliderValues["sliderValue1"] = String(sliderValue1);
@@ -131,7 +132,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       notifyClients(getSliderValues());
     }
     if (message.indexOf("WD") >= 0) {
-      Serial.println(getSliderValues());
+      Serial.println(distanceCm);
       Serial.print(getSliderValues());
       notifyClients(getSliderValues());
     }
