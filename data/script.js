@@ -32,19 +32,20 @@ function updateSliderPWM(element) {
     var sliderNumber = element.id.charAt(element.id.length-1);
     var sliderValue = document.getElementById(element.id).value;
     document.getElementById("sliderValue"+sliderNumber).innerHTML = sliderValue;
-    console.log(sliderValue);
+    
     websocket.send(sliderNumber+"s"+sliderValue.toString());
 }
 
 function updateDistance(element) {
     var waterLevel = document.getElementById(element.id).value;
     document.getElementById("waterLevelValue").innerHTML = waterLevel;
-    console.log(sliderValue);
+
     websocket.send("WD");
 }
 
+
+
 function onMessage(event) {
-    console.log(event.data);
     var myObj = JSON.parse(event.data);
     var keys = Object.keys(myObj);
 
@@ -52,6 +53,5 @@ function onMessage(event) {
         var key = keys[i];
         document.getElementById(key).innerHTML = myObj[key];
         document.getElementById("slider"+ (i+1).toString()).value = myObj[key];
-        document.getElementById("waterLevelValue").value = myObj["WaterDistance"]
     }
 }
