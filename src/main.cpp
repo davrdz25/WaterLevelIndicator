@@ -28,15 +28,6 @@ const int triggPin = 23;
 
 String GetSensorValues()
 {
-  digitalWrite(triggPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(triggPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(triggPin, LOW);
-  
-  duration = pulseIn(echoPin, HIGH);
-  distanceCm = duration * SOUND_SPEED/2;
-
   sensorValues["WaterDistance"] = String(distanceCm);
   sensorValues["RelayState"] = relayState;
 
@@ -82,8 +73,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
     message = (char*)data;
-
-    Serial.println(message);
   
     if (message.indexOf("WD") >= 0) {
       notifyClients(GetSensorValues());
@@ -145,14 +134,14 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(triggPin, LOW);
-  delayMicroseconds(2);
   digitalWrite(triggPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(triggPin, LOW);
   
   duration = pulseIn(echoPin, HIGH);
   distanceCm = duration * SOUND_SPEED/2;
+
+  Serial.println(distanceCm);
 
   if(distanceCm > 20)
   {
@@ -164,6 +153,6 @@ void loop() {
     digitalWrite(relayPin, LOW);
     //relayState = false;
   }
-
-  ws.cleanupClients();
+  delay(500);
+  //ws.cleanupClients();
 }
