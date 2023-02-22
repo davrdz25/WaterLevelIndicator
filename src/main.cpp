@@ -61,7 +61,7 @@ String getSensorValues()
   Serial.print("Get distance");
   Serial.println(distanceCm);
 
-  sensorValues["sliderValue3"] = String(distanceCm);
+  sensorValues["WaterDistance"] = String(distanceCm);
 
   String jsonString = JSON.stringify(sensorValues);
   return jsonString;

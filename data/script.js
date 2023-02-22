@@ -47,6 +47,7 @@ function updateInputDistance(element) {
 function onMessage(event) {
     var myObj = JSON.parse(event.data);
     var keys = Object.keys(myObj);
+    console.log(event)
 
     if(document.getElementById("waterLevel").id != "waterLevel")
     {
