@@ -70,8 +70,6 @@ String getSensorValues()
 String getSliderValues(){
 
   sliderValues["sliderValue1"] = String(sliderValue1);
-  sliderValues["sliderValue2"] = String(sliderValue2);
-  sliderValues["sliderValue3"] = String(sliderValue3);
 
   String jsonString = JSON.stringify(sliderValues);
   return jsonString;
@@ -130,13 +128,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       Serial.print(getSliderValues());
       notifyClients(getSliderValues());
     }    
-    if (message.indexOf("3s") >= 0) {
-      sliderValue3 = message.substring(2);
-      dutyCycle3 = map(sliderValue3.toInt(), 0, 100, 0, 255);
-      Serial.println(dutyCycle3);
-      Serial.print(getSliderValues());
-      notifyClients(getSliderValues());
-    }
     if (message.indexOf("WD") >= 0) {
       Serial.println(distanceCm);
       Serial.print(getSensorValues());
