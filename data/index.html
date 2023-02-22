@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>ESP IOT DASHBOARD</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,17 +14,9 @@
     <div class="content">
         <div class="card-grid">
             <div class="card">
-                <p class="card-title">Fader 1</p>
-                <p class="switch">
-                    <input type="range" onchange="updateSliderPWM(this)" id="slider1" min="0" max="100" step="1"
-                        value="0" class="slider">
-                </p>
-                <p class="state">Brightness: <span id="sliderValue1"></span> &percnt;</p>
-            </div>
-            <div class="card">
                 <p class="card-title"> Fader 3</p>
                 <p class="switch">
-                    <input onshow="updateDistance(this)" disabled id="waterLevel" min="0" max="100" step="1" value="0" >
+                    <input onshow="updateDistance(this)" disabled id="waterLevel" min="0" max="100" step="1" value="0">
                 </p>
                 <p class="state">Brightness: <span id="level"></span> &percnt;</p>
             </div>

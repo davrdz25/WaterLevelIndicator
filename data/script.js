@@ -8,7 +8,7 @@ function onload(event) {
     initWebSocket();
 }
 
-function getValues(){
+function getValues() {
     websocket.send("getValues");
 }
 
@@ -30,14 +30,6 @@ function onClose(event) {
     setTimeout(initWebSocket, 2000);
 }
 
-function updateSliderPWM(element) {
-    var sliderNumber = element.id.charAt(element.id.length-1);
-    var sliderValue = document.getElementById(element.id).value;
-    document.getElementById("sliderValue"+sliderNumber).innerHTML = sliderValue;
-    
-    websocket.send(sliderNumber+"s"+sliderValue.toString());
-}
-
 function updateInputDistance(element) {
     var sensorValue = document.getElementById(element.id).value;
     document.getElementById(element.id).innerHTML = sensorValue;
@@ -46,21 +38,11 @@ function updateInputDistance(element) {
 
 function onMessage(event) {
     var myObj = JSON.parse(event.data);
-    var keys = Object.keys(myObj);
 
-    if(document.getElementById("waterLevel").id != "waterLevel")
-    {
-        document.getElementById("slider1").innerHTML = myObj["sliderValue1"];
-        document.getElementById("slider1").value = myObj["sliderValue1"];
-        
-    }
-    else 
-    {
-        document.getElementById("waterLevel").innerHTML = myObj["WaterDistance"];
-        document.getElementById("waterLevel").value = myObj["WaterDistance"];
-    }
+    document.getElementById("waterLevel").innerHTML = myObj["WaterDistance"];
+    document.getElementById("waterLevel").value = myObj["WaterDistance"];
 }
 
-var interval = setInterval(function(){
+var interval = setInterval(function () {
     updateInputDistance(document.getElementById("waterLevel"))
-},60000)
+}, 60000)
