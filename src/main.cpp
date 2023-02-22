@@ -6,7 +6,6 @@
 #include <Arduino_JSON.h>
 
 #define SOUND_SPEED 0.034
-#define CM_TO_INCH 0.393701
 
 long duration;
 float distanceCm;
@@ -46,14 +45,15 @@ const int echoPin = 22;
 const int triggPin = 23;
 
 JSONVar sliderValues;
+JSONVar sensorValues;
 
-
-String getSliderValues(){
-  digitalWrite(23, LOW);
+String getSensorValues()
+{
+  digitalWrite(triggPin, LOW);
   delayMicroseconds(2);
-  digitalWrite(23, HIGH);
+  digitalWrite(triggPin, HIGH);
   delayMicroseconds(10);
-  digitalWrite(23, LOW);
+  digitalWrite(triggPin, LOW);
   
   duration = pulseIn(echoPin, HIGH);
   distanceCm = duration * SOUND_SPEED/2;
@@ -61,11 +61,17 @@ String getSliderValues(){
   Serial.print("Get distance");
   Serial.println(distanceCm);
 
+  sensorValues["sliderValue3"] = String(distanceCm);
+
+  String jsonString = JSON.stringify(sensorValues);
+  return jsonString;
+}
+
+String getSliderValues(){
+
   sliderValues["sliderValue1"] = String(sliderValue1);
   sliderValues["sliderValue2"] = String(sliderValue2);
   sliderValues["sliderValue3"] = String(sliderValue3);
-  sliderValues["WaterDistance"] = String(distanceCm);
-
 
   String jsonString = JSON.stringify(sliderValues);
   return jsonString;
@@ -133,8 +139,8 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     }
     if (message.indexOf("WD") >= 0) {
       Serial.println(distanceCm);
-      Serial.print(getSliderValues());
-      notifyClients(getSliderValues());
+      Serial.print(getSensorValues());
+      notifyClients(getSensorValues());
     }
 
     if (strcmp((char*)data, "getValues") == 0) {
