@@ -36,7 +36,7 @@ String GetSensorValues()
   
   duration = pulseIn(echoPin, HIGH);
   distanceCm = duration * SOUND_SPEED/2;
-  
+
   sensorValues["WaterDistance"] = String(distanceCm);
   sensorValues["RelayState"] = relayState;
 
@@ -127,8 +127,9 @@ void setup() {
   pinMode(relayPin, OUTPUT);
   pinMode(triggPin, OUTPUT); 
   pinMode(echoPin, INPUT);
+  digitalWrite(relayPin, LOW);
   
-  initFS();
+  /* initFS();
   initWiFi();
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -139,21 +140,29 @@ void setup() {
   server.serveStatic("/", SPIFFS, "/");
 
   initWebSocket();
-  server.begin();
+  server.begin(); */
 
 }
 
 void loop() {
+  digitalWrite(triggPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(triggPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggPin, LOW);
+  
+  duration = pulseIn(echoPin, HIGH);
+  distanceCm = duration * SOUND_SPEED/2;
 
   if(distanceCm > 20)
   {
     digitalWrite(relayPin, HIGH);
-    relayState = true;
+    //relayState = true;
   }
   else
   { 
     digitalWrite(relayPin, LOW);
-    relayState = false;
+    //relayState = false;
   }
 
   ws.cleanupClients();
