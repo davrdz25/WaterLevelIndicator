@@ -58,7 +58,7 @@ String getSensorValues()
   duration = pulseIn(echoPin, HIGH);
   distanceCm = duration * SOUND_SPEED/2;
 
-  Serial.print("Get distance");
+  Serial.print("Get distance ");
   Serial.println(distanceCm);
 
   sensorValues["WaterDistance"] = String(distanceCm);
@@ -145,6 +145,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
 
     if (strcmp((char*)data, "getValues") == 0) {
       notifyClients(getSliderValues());
+      notifyClients(getSensorValues());
     }
   }
 }
