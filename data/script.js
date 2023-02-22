@@ -41,6 +41,8 @@ function onMessage(event) {
 
     document.getElementById("waterLevel").innerHTML = myObj["WaterDistance"];
     document.getElementById("waterLevel").value = myObj["WaterDistance"];
+
+    console.log(myObj["RelayState"])
 }
 
 var interval = setInterval(function () {

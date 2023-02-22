@@ -7,37 +7,33 @@
 
 #define SOUND_SPEED 0.034
 
+AsyncWebServer server(8081);
+AsyncWebSocket ws("/ws");
+JSONVar sensorValues;
+
 long duration;
 float distanceCm;
+bool relayState;
 
+String message = "";
+const char* ssid = "Xiaomi_7D23";
+const char* password = "1234567890";
 /* const char* ssid = "INFINITUM01B6_2.4";
 const char* password = "Tp6Cy6Us1r"; */
 const char* hostname = "ESP32Server";
-
-
-const char* ssid = "Xiaomi_7D23";
-const char* password = "1234567890";
-
-
-AsyncWebServer server(8081);
-AsyncWebSocket ws("/ws");
-
-String message = "";
 
 const int relayPin = 21;
 const int echoPin = 22;
 const int triggPin = 23;
 
-JSONVar sensorValues;
-
-String getSensorValues()
+String GetSensorValues()
 {
-  Serial.print("Get distance ");
-  Serial.println(distanceCm);
-
   sensorValues["WaterDistance"] = String(distanceCm);
+  sensorValues["RelayState"] = relayState;
 
   String jsonString = JSON.stringify(sensorValues);
+  Serial.println(sensorValues);
+
   return jsonString;
 }
 
@@ -66,7 +62,6 @@ void initWiFi() {
   Serial.println(WiFi.localIP());
   Serial.println(WiFi.macAddress());
   Serial.println(WiFi.getHostname());
-
 }
 
 void notifyClients(String sliderValues) {
@@ -78,16 +73,19 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
     message = (char*)data;
+
     Serial.println(message);
   
     if (message.indexOf("WD") >= 0) {
-      Serial.println(distanceCm);
-      Serial.print(getSensorValues());
-      notifyClients(getSensorValues());
+      notifyClients(GetSensorValues());
+    }
+
+    if (message.indexOf("RS") >= 0) {
+      notifyClients(GetSensorValues());
     }
 
     if (strcmp((char*)data, "getValues") == 0) {
-      notifyClients(getSensorValues());
+      notifyClients(GetSensorValues());
     }
   }
 }
@@ -120,7 +118,7 @@ void setup() {
   pinMode(relayPin, OUTPUT);
   pinMode(triggPin, OUTPUT); 
   pinMode(echoPin, INPUT);
-
+  
   initFS();
   initWiFi();
 
@@ -145,5 +143,11 @@ void loop() {
   
   duration = pulseIn(echoPin, HIGH);
   distanceCm = duration * SOUND_SPEED/2;
+
+  if(distanceCm > 20)
+    relayState = true;
+  else
+    relayState = false;
+
   ws.cleanupClients();
 }
