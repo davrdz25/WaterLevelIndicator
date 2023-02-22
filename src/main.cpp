@@ -135,8 +135,6 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(triggPin, LOW);
-  delayMicroseconds(2);
   digitalWrite(triggPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(triggPin, LOW);
@@ -148,11 +146,12 @@ void loop() {
     {
       digitalWrite(relayPin, HIGH);
       relayState = true;
-      }
+    }
   else
    { 
     digitalWrite(relayPin, LOW);
-    relayState = false;}
+    relayState = false;
+    }
 
   ws.cleanupClients();
 }
