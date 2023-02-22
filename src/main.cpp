@@ -28,6 +28,15 @@ const int triggPin = 23;
 
 String GetSensorValues()
 {
+  digitalWrite(triggPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(triggPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggPin, LOW);
+  
+  duration = pulseIn(echoPin, HIGH);
+  distanceCm = duration * SOUND_SPEED/2;
+  
   sensorValues["WaterDistance"] = String(distanceCm);
   sensorValues["RelayState"] = relayState;
 
@@ -135,14 +144,6 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(triggPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(triggPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(triggPin, LOW);
-  
-  duration = pulseIn(echoPin, HIGH);
-  distanceCm = duration * SOUND_SPEED/2;
 
   if(distanceCm > 20)
   {
