@@ -46,8 +46,6 @@ function updateInputDistance(element) {
 
 function onMessage(event) {
     var myObj = JSON.parse(event.data);
-    var keys = Object.keys(myObj);
-    console.log(event)
 
     document.getElementById("sliderValue1").innerHTML = myObj["sliderValue1"];
     document.getElementById("sliderValue1").value = myObj["sliderValue1"];
