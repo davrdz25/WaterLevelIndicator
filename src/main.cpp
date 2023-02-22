@@ -135,6 +135,8 @@ void setup() {
 }
 
 void loop() {
+  digitalWrite(triggPin, LOW);
+  delayMicroseconds(2);
   digitalWrite(triggPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(triggPin, LOW);
@@ -143,15 +145,15 @@ void loop() {
   distanceCm = duration * SOUND_SPEED/2;
 
   if(distanceCm > 20)
-    {
-      digitalWrite(relayPin, HIGH);
-      relayState = true;
-    }
+  {
+    digitalWrite(relayPin, HIGH);
+    relayState = true;
+  }
   else
-   { 
+  { 
     digitalWrite(relayPin, LOW);
     relayState = false;
-    }
+  }
 
   ws.cleanupClients();
 }
