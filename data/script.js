@@ -49,21 +49,15 @@ function onMessage(event) {
     var keys = Object.keys(myObj);
     console.log(event)
 
-    if(document.getElementById("waterLevel").id != "waterLevel")
-    {
-        for (var i = 0; i < keys.length - 1; i++){
-            var key = keys[i];
-            document.getElementById(key).innerHTML = myObj[key];
-            document.getElementById("slider"+ (i+1).toString()).value = myObj[key];
-            document.getElementById("waterLevel").innerHTML = myObj["WaterDistance"];
-            document.getElementById("waterLevel").value = myObj["WaterDistance"];
-        }
-    }
-    else 
-    {
-        document.getElementById("waterLevel").innerHTML = myObj["WaterDistance"];
-        document.getElementById("waterLevel").value = myObj["WaterDistance"];
-    }
+    document.getElementById("sliderValue1").innerHTML = myObj["sliderValue1"];
+    document.getElementById("sliderValue1").value = myObj["sliderValue1"];
+    document.getElementById("sliderValue2").innerHTML = myObj["sliderValue2"];
+    document.getElementById("sliderValue2").value = myObj["sliderValue2"];
+    document.getElementById("sliderValue3").innerHTML = myObj["sliderValue3"];
+    document.getElementById("sliderValue3").value = myObj["sliderValue3"];
+    document.getElementById("waterLevel").innerHTML = myObj["WaterDistance"];
+    document.getElementById("waterLevel").value = myObj["WaterDistance"];
+    
 }
 
 var interval = setInterval(function(){
