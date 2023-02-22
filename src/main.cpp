@@ -145,9 +145,14 @@ void loop() {
   distanceCm = duration * SOUND_SPEED/2;
 
   if(distanceCm > 20)
-    relayState = true;
+    {
+      digitalWrite(relayPin, HIGH);
+      relayState = true;
+      }
   else
-    relayState = false;
+   { 
+    digitalWrite(relayPin, LOW);
+    relayState = false;}
 
   ws.cleanupClients();
 }
