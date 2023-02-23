@@ -25,8 +25,8 @@ void blink()
 }
 
 Ticker timer4(blink, 60000); 
-Ticker timerStartPump(StartPump,60000,0,MILLIS);
-Ticker timerSuspendPump(StartPump,60000,0,MILLIS);
+Ticker timerStartPump(StartPump,1000,0,MILLIS);
+Ticker timerSuspendPump(StartPump,1000,0,MILLIS);
 Ticker timerGetDistance(GetDistance,1000,0,MILLIS);
 
 
@@ -174,23 +174,15 @@ void setup()
 
 void loop()
 {
-  Serial.println(distanceCm);
-
-
-  Serial.printf("Suspend pump %i",timerSuspendPump.remaining());
-  Serial.printf("Start pump %i",timerStartPump.remaining());
-
+  Serial.printf("Distance: %f \n", distanceCm);
+  timerGetDistance.update();
+  timerStartPump.update();
   ws.cleanupClients();
 }
 
 void StartPump()
 {
-  digitalWrite(relayPin, LOW);
-  relayState = true;
-  startedPump = true;
-  suspendedPump = false;
-  timerStartPump.start();
-  timerSuspendPump.stop();
+  Serial.printf("Waterpumo started time remaining %ui", timerStartPump.remaining());
 }
 
 void SuspendPump()
@@ -214,16 +206,5 @@ void GetDistance()
   duration = pulseIn(echoPin, HIGH);
   distanceCm = duration * SOUND_SPEED / 2;
 
-  if (distanceCm > 20)
-  {
-    if(!startedPump && !suspendedPump && timerStartPump.remaining() != 0)
-      StartPump();
-    
-    if(startedPump && timerStartPump.remaining() == 0 && !suspendedPump)
-      SuspendPump();
-  }
-  else 
-  {
-    SuspendPump();
-  }
+  timerStartPump.start();
 }
