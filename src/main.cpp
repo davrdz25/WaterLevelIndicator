@@ -4,17 +4,20 @@
 #include <AsyncElegantOTA.h>
 #include "SPIFFS.h"
 #include <Arduino_JSON.h>
+#include "Ticker.h"
 
 #define LED_BUILTIN 2
 #define SOUND_SPEED 0.034
 
 bool ledState;
 
-hw_timer_t *My_timer = NULL;
-
-void IRAM_ATTR onTimer(){
-  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+void blink() 
+{
+  digitalWrite(LED_BUILTIN, ledState);
+  ledState = !ledState;
 }
+
+Ticker timer4(blink, 500); 
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
@@ -89,11 +92,6 @@ void initWiFi()
   Serial.println(WiFi.localIP());
   Serial.println(WiFi.macAddress());
   Serial.println(WiFi.getHostname());
-
-  My_timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(My_timer, &onTimer, true);
-  timerAlarmWrite(My_timer, 1000000, true);
-  timerAlarmEnable(My_timer);
 }
 
 void notifyClients(String sliderValues)
@@ -187,14 +185,7 @@ void loop()
   {
     digitalWrite(relayPin, LOW);
     relayState = true;
-  }
-
-  if(relayState)
-  {
-    My_timer = timerBegin(0, 80, true);
-    timerAttachInterrupt(My_timer, &onTimer, true);
-    timerAlarmWrite(My_timer, 1000000*60, true);
-    timerAlarmEnable(My_timer);
+    timer4.update();
   }
 
   delay(1000);
