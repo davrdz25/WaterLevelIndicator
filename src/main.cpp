@@ -22,13 +22,7 @@ void blink()
   ledState = !ledState;
 }
 
-<<<<<<< HEAD
 Ticker timer4(blink, 60000); 
-=======
-Ticker timer4(blink, 500);
-Ticker timerStartPump(StartPump, 60000, 0, MILLIS);
-Ticker timerSuspendPump(SuspendPump, 60000, 0, MILLIS);
->>>>>>> d7fbf1a (Updates)
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
@@ -189,7 +183,6 @@ void loop()
   GetDistance();
   if (distanceCm > 20)
   {
-<<<<<<< HEAD
       digitalWrite(relayPin, HIGH);
       relayState = false;
   }
@@ -204,27 +197,6 @@ void loop()
   Serial.println(timer4.remaining());
 
   delay(200);
-=======
-    if (startedPump && !suspendedPump)
-    {
-      if (timerSuspendPump.remaining() > 0)
-      {
-        if (timerStartPump.remaining() == 0)
-          SuspendPump();
-      }
-    }
-    else
-    {
-      StartPump();
-
-      if (timerStartPump.remaining() == 0)
-      {
-        SuspendPump();
-      }
-    }
-  }
-  delay(1000);
->>>>>>> d7fbf1a (Updates)
   ws.cleanupClients();
 }
 
@@ -233,7 +205,6 @@ void StartPump()
   digitalWrite(relayPin, LOW);
   relayState = true;
   startedPump = true;
-  timerStartPump.start();
 }
 
 void SuspendPump()
@@ -241,5 +212,4 @@ void SuspendPump()
   digitalWrite(relayPin, HIGH);
   relayState = false;
   suspendedPump = true;
-  timerSuspendPump.start();
 }
