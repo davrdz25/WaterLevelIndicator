@@ -15,6 +15,8 @@ bool suspendedPump = true;
 bool ledState;
 void StartPump();
 void SuspendPump();
+void GetDistance();
+
 
 void blink()
 {
@@ -25,6 +27,7 @@ void blink()
 Ticker timer4(blink, 60000); 
 Ticker timerStartPump(StartPump,60000,0,MILLIS);
 Ticker timerSuspendPump(StartPump,60000,0,MILLIS);
+Ticker timerGetDistance(GetDistance,1000,0,MILLIS);
 
 
 AsyncWebServer server(8081);
@@ -46,18 +49,6 @@ const int waitTime = 15;
 const int relayPin = 21;
 const int echoPin = 22;
 const int triggPin = 23;
-
-void GetDistance()
-{
-  digitalWrite(triggPin, LOW);
-  delayMicroseconds(10);
-  digitalWrite(triggPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(triggPin, LOW);
-
-  duration = pulseIn(echoPin, HIGH);
-  distanceCm = duration * SOUND_SPEED / 2;
-}
 
 String GetSensorValues()
 {
@@ -177,25 +168,14 @@ void setup()
 
   initWebSocket();
   server.begin();
+
+  timerGetDistance.start();
 }
 
 void loop()
 {
   Serial.println(distanceCm);
 
-  GetDistance();
-  if (distanceCm > 20)
-  {
-    if(!startedPump && !suspendedPump && timerStartPump.remaining() != 0)
-      StartPump();
-    
-    if(startedPump && timerStartPump.remaining() == 0 && !suspendedPump)
-      SuspendPump();
-  }
-  else 
-  {
-    SuspendPump();
-  }
 
   Serial.printf("Suspend pump %i",timerSuspendPump.remaining());
   Serial.printf("Start pump %i",timerStartPump.remaining());
@@ -209,6 +189,8 @@ void StartPump()
   relayState = true;
   startedPump = true;
   suspendedPump = false;
+  timerStartPump.start();
+  timerSuspendPump.stop();
 }
 
 void SuspendPump()
@@ -217,4 +199,31 @@ void SuspendPump()
   relayState = false;
   suspendedPump = true;
   startedPump = false;
+  timerStartPump.stop();
+  timerSuspendPump.start();
+}
+
+void GetDistance()
+{
+  digitalWrite(triggPin, LOW);
+  delayMicroseconds(10);
+  digitalWrite(triggPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+  distanceCm = duration * SOUND_SPEED / 2;
+
+  if (distanceCm > 20)
+  {
+    if(!startedPump && !suspendedPump && timerStartPump.remaining() != 0)
+      StartPump();
+    
+    if(startedPump && timerStartPump.remaining() == 0 && !suspendedPump)
+      SuspendPump();
+  }
+  else 
+  {
+    SuspendPump();
+  }
 }
