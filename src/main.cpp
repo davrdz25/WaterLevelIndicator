@@ -9,15 +9,26 @@
 #define LED_BUILTIN 2
 #define SOUND_SPEED 0.034
 
-bool ledState;
+bool startedPump = false;
+bool suspendedPump = true;
 
-void blink() 
+bool ledState;
+void StartPump();
+void SuspendPump();
+
+void blink()
 {
   digitalWrite(LED_BUILTIN, ledState);
   ledState = !ledState;
 }
 
+<<<<<<< HEAD
 Ticker timer4(blink, 60000); 
+=======
+Ticker timer4(blink, 500);
+Ticker timerStartPump(StartPump, 60000, 0, MILLIS);
+Ticker timerSuspendPump(SuspendPump, 60000, 0, MILLIS);
+>>>>>>> d7fbf1a (Updates)
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
@@ -28,8 +39,8 @@ float distanceCm;
 bool relayState;
 
 String message = "";
-const char* ssid = "Xiaomi_7D23";
-const char* password = "1234567890"; 
+const char *ssid = "Xiaomi_7D23";
+const char *password = "1234567890";
 /* const char *ssid = "INFINITUM01B6_2.4";
 const char *password = "Tp6Cy6Us1r"; */
 const char *hostname = "ESP32Server";
@@ -168,7 +179,7 @@ void setup()
   server.serveStatic("/", SPIFFS, "/");
 
   initWebSocket();
-  server.begin(); 
+  server.begin();
 }
 
 void loop()
@@ -176,8 +187,9 @@ void loop()
   Serial.println(distanceCm);
 
   GetDistance();
-  if (distanceCm < 20)
+  if (distanceCm > 20)
   {
+<<<<<<< HEAD
       digitalWrite(relayPin, HIGH);
       relayState = false;
   }
@@ -192,5 +204,42 @@ void loop()
   Serial.println(timer4.remaining());
 
   delay(200);
+=======
+    if (startedPump && !suspendedPump)
+    {
+      if (timerSuspendPump.remaining() > 0)
+      {
+        if (timerStartPump.remaining() == 0)
+          SuspendPump();
+      }
+    }
+    else
+    {
+      StartPump();
+
+      if (timerStartPump.remaining() == 0)
+      {
+        SuspendPump();
+      }
+    }
+  }
+  delay(1000);
+>>>>>>> d7fbf1a (Updates)
   ws.cleanupClients();
+}
+
+void StartPump()
+{
+  digitalWrite(relayPin, LOW);
+  relayState = true;
+  startedPump = true;
+  timerStartPump.start();
+}
+
+void SuspendPump()
+{
+  digitalWrite(relayPin, HIGH);
+  relayState = false;
+  suspendedPump = true;
+  timerSuspendPump.start();
 }
