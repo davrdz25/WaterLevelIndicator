@@ -4,22 +4,17 @@
 #include <AsyncElegantOTA.h>
 #include "SPIFFS.h"
 #include <Arduino_JSON.h>
-#include <Ticker.h>
 
 #define LED_BUILTIN 2
 #define SOUND_SPEED 0.034
 
 bool ledState;
 
-void blink() 
-{
-  digitalWrite(LED_BUILTIN, ledState);
-  ledState = !ledState;
+hw_timer_t *My_timer = NULL;
+
+void IRAM_ATTR onTimer(){
+  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 }
-
-
-Ticker timer4(blink, 500);
-
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
@@ -90,10 +85,15 @@ void initWiFi()
     delay(1000);
   }
 
-  Serial.printf("\nConnected to %c \n", &ssid);
+  Serial.printf("\nConnected to %s \n", &ssid);
   Serial.println(WiFi.localIP());
   Serial.println(WiFi.macAddress());
   Serial.println(WiFi.getHostname());
+
+  My_timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(My_timer, &onTimer, true);
+  timerAlarmWrite(My_timer, 1000000, true);
+  timerAlarmEnable(My_timer);
 }
 
 void notifyClients(String sliderValues)
@@ -160,8 +160,6 @@ void setup()
   pinMode(echoPin, INPUT);
   digitalWrite(relayPin, LOW);
 
-  timer4.start();
-
   initFS();
   initWiFi();
 
@@ -177,21 +175,28 @@ void setup()
 
 void loop()
 {
-  timer4.update();
-  /* Serial.println(distanceCm);
+  Serial.println(distanceCm);
 
   GetDistance();
-  if (distanceCm > 20)
+  if (distanceCm < 20)
   {
-      digitalWrite(relayPin, LOW);
-      relayState = true;
+      digitalWrite(relayPin, HIGH);
+      relayState = false;
   }
   else 
   {
-    digitalWrite(relayPin, HIGH);
-    relayState = false;
+    digitalWrite(relayPin, LOW);
+    relayState = true;
   }
 
-  delay(1000); */
+  if(relayState)
+  {
+    My_timer = timerBegin(0, 80, true);
+    timerAttachInterrupt(My_timer, &onTimer, true);
+    timerAlarmWrite(My_timer, 1000000*60, true);
+    timerAlarmEnable(My_timer);
+  }
+
+  delay(1000);
   ws.cleanupClients();
 }
