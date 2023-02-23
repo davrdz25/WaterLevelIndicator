@@ -23,6 +23,9 @@ void blink()
 }
 
 Ticker timer4(blink, 60000); 
+Ticker timerStartPump(StartPump,60000,0,MILLIS);
+Ticker timerSuspendPump(StartPump,60000,0,MILLIS);
+
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
@@ -183,20 +186,20 @@ void loop()
   GetDistance();
   if (distanceCm > 20)
   {
-      digitalWrite(relayPin, HIGH);
-      relayState = false;
+    if(!startedPump && !suspendedPump && timerStartPump.remaining() != 0)
+      StartPump();
+    
+    if(startedPump && timerStartPump.remaining() == 0 && !suspendedPump)
+      SuspendPump();
   }
   else 
   {
-    digitalWrite(relayPin, LOW);
-    relayState = true;
-    timer4.start();
+    SuspendPump();
   }
 
-  timer4.update();
-  Serial.println(timer4.remaining());
+  Serial.printf("Suspend pump %i",timerSuspendPump.remaining());
+  Serial.printf("Start pump %i",timerStartPump.remaining());
 
-  delay(200);
   ws.cleanupClients();
 }
 
@@ -205,6 +208,7 @@ void StartPump()
   digitalWrite(relayPin, LOW);
   relayState = true;
   startedPump = true;
+  suspendedPump = false;
 }
 
 void SuspendPump()
@@ -212,4 +216,5 @@ void SuspendPump()
   digitalWrite(relayPin, HIGH);
   relayState = false;
   suspendedPump = true;
+  startedPump = false;
 }
