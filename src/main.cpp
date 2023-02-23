@@ -17,7 +17,7 @@ void blink()
   ledState = !ledState;
 }
 
-Ticker timer4(blink, 500); 
+Ticker timer4(blink, 60000); 
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
@@ -185,9 +185,12 @@ void loop()
   {
     digitalWrite(relayPin, LOW);
     relayState = true;
-    timer4.update();
+    timer4.start();
   }
 
-  delay(1000);
+  timer4.update();
+  Serial.println(timer4.remaining());
+
+  delay(200);
   ws.cleanupClients();
 }
