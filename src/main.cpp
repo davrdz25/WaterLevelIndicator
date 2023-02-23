@@ -16,10 +16,10 @@ float distanceCm;
 bool relayState;
 
 String message = "";
-/* const char* ssid = "Xiaomi_7D23";
-const char* password = "1234567890"; */
-const char *ssid = "INFINITUM01B6_2.4";
-const char *password = "Tp6Cy6Us1r";
+const char* ssid = "Xiaomi_7D23";
+const char* password = "1234567890"; 
+/* const char *ssid = "INFINITUM01B6_2.4";
+const char *password = "Tp6Cy6Us1r"; */
 const char *hostname = "ESP32Server";
 
 const int waitTime = 15;
@@ -158,16 +158,20 @@ void setup()
 
 void loop()
 {
-  Serial.println(distanceCm);
+  digitalWrite(triggPin, LOW);
+  delayMicroseconds(10);
+  digitalWrite(triggPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggPin, LOW);
 
-  GetDistance();
+  duration = pulseIn(echoPin, HIGH);
+  distanceCm = duration * SOUND_SPEED / 2;
+
+  Serial.println(distanceCm);
 
   if (distanceCm > 20)
   {
-    while (distanceCm > 20)
-    {
       digitalWrite(relayPin, LOW);
-    }
   }
   else 
   {
