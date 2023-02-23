@@ -4,8 +4,22 @@
 #include <AsyncElegantOTA.h>
 #include "SPIFFS.h"
 #include <Arduino_JSON.h>
+#include <Ticker.h>
 
+#define LED_BUILTIN 2
 #define SOUND_SPEED 0.034
+
+bool ledState;
+
+void blink() 
+{
+  digitalWrite(LED_BUILTIN, ledState);
+  ledState = !ledState;
+}
+
+
+Ticker timer4(blink, 500);
+
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
@@ -29,6 +43,8 @@ const int triggPin = 23;
 
 void GetDistance()
 {
+  digitalWrite(triggPin, LOW);
+  delayMicroseconds(10);
   digitalWrite(triggPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(triggPin, LOW);
@@ -138,10 +154,13 @@ void initWebSocket()
 void setup()
 {
   Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
   pinMode(relayPin, OUTPUT);
   pinMode(triggPin, OUTPUT);
   pinMode(echoPin, INPUT);
   digitalWrite(relayPin, LOW);
+
+  timer4.start();
 
   initFS();
   initWiFi();
@@ -153,31 +172,26 @@ void setup()
   server.serveStatic("/", SPIFFS, "/");
 
   initWebSocket();
-  server.begin();
+  server.begin(); 
 }
 
 void loop()
 {
-  digitalWrite(triggPin, LOW);
-  delayMicroseconds(10);
-  digitalWrite(triggPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(triggPin, LOW);
+  timer4.update();
+  /* Serial.println(distanceCm);
 
-  duration = pulseIn(echoPin, HIGH);
-  distanceCm = duration * SOUND_SPEED / 2;
-
-  Serial.println(distanceCm);
-
+  GetDistance();
   if (distanceCm > 20)
   {
       digitalWrite(relayPin, LOW);
+      relayState = true;
   }
   else 
   {
     digitalWrite(relayPin, HIGH);
+    relayState = false;
   }
 
-  delay(1000);
-  // ws.cleanupClients();
+  delay(1000); */
+  ws.cleanupClients();
 }
