@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <Ticker.h>
+#include "Ticker.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
@@ -22,6 +22,11 @@ TaskHandle_t pumpOffTaskHandle;
 // define ticker for water level check
 Ticker waterLevelTicker;
 
+
+void pumpOffTask(void* parameter);
+void pumpOnTask(void* parameter);
+
+void* parameter;
 // function to get water level
 void getWaterLevel(void* parameter) {
   while (true) {
@@ -48,6 +53,22 @@ void getWaterLevel(void* parameter) {
   }
 }
 
+void setup() {
+  int arg = 0;
+  // initialize serial communication
+  Serial.begin(115200);
+  // set pin modes
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(PUMP_PIN, OUTPUT);
+  // start water level checking using ticker
+  waterLevelTicker.attach_ms(WATER_CHECK_INTERVAL, getWaterLevel, parameter);
+}
+
+void loop() {
+  // do nothing
+}
+
 // function to turn on the water pump
 void pumpOnTask(void* parameter) {
   // turn on the pump
@@ -66,19 +87,4 @@ void pumpOffTask(void* parameter) {
   xTaskCreate(pumpOnTask, "PumpOnTask", 2048, NULL, 1, &pumpOnTaskHandle);
   // delete this task
   vTaskDelete(pumpOffTaskHandle);
-}
-
-void setup() {
-  // initialize serial communication
-  Serial.begin(115200);
-  // set pin modes
-  pinMode(TRIG_PIN, OUTPUT);
-  pinMode(ECHO_PIN, INPUT);
-  pinMode(PUMP_PIN, OUTPUT);
-  // start water level checking using ticker
-  waterLevelTicker.attach_ms(1000, getWaterLevel);
-}
-
-void loop() {
-  // do nothing
 }
