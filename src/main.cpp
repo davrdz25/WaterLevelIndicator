@@ -11,9 +11,6 @@
 #define LED_BUILTIN 2
 #define SOUND_SPEED 0.034
 
-const int waterLevelPin = 14;
-const int pumpPin = 12;
-const float threshold = 20.0; // cm
 const int pumpOnTime = 15 * 60 * 1000; // 15 minutes in milliseconds
 const int pumpOffTime = 15 * 60 * 1000; // 15 minutes in milliseconds
 const int samplingInterval = 1000; // 1 second in milliseconds
@@ -25,12 +22,12 @@ const int triggPin = 23;
 void waterLevelTask(void *pvParameters) {
   float waterLevel = 0.0;
   for (;;) {
-    waterLevel = // read water level from HC-SR04 sensor
+    waterLevel = getWaterLevel();
     xSemaphoreTake(waterLevelSemaphore, portMAX_DELAY);
-    if (waterLevel < threshold) {
-      digitalWrite(pumpPin, HIGH); // turn on water pump
+    if (waterLevel < 20.0) {
+      digitalWrite(relayPin, HIGH); // turn on water pump
       pumpTicker.once_ms(pumpOnTime, []() {
-        digitalWrite(pumpPin, LOW); // turn off water pump
+        digitalWrite(relayPin, LOW); // turn off water pump
         xSemaphoreGive(waterLevelSemaphore);
       });
     } else {
