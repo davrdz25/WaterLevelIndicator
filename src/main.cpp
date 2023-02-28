@@ -11,13 +11,18 @@
 #define LED_BUILTIN 2
 #define SOUND_SPEED 0.034
 
-const int pumpOnTime = 15 * 60 * 1000; // 15 minutes in milliseconds
-const int pumpOffTime = 15 * 60 * 1000; // 15 minutes in milliseconds
+const int pumpOnTime = 60 * 1000; // 15 minutes in milliseconds
+const int pumpOffTime = 60 * 1000; // 15 minutes in milliseconds
 const int samplingInterval = 1000; // 1 second in milliseconds
 
 const int relayPin = 21;
 const int echoPin = 22;
 const int triggPin = 23;
+
+float getWaterLevel();
+
+SemaphoreHandle_t waterLevelSemaphore;
+Ticker pumpTicker;
 
 void waterLevelTask(void *pvParameters) {
   float waterLevel = 0.0;
@@ -33,16 +38,13 @@ void waterLevelTask(void *pvParameters) {
     } else {
       xSemaphoreGive(waterLevelSemaphore);
     }
-    vTaskDelay(samplingInterval / portTICK_PERIOD_MS);
+    vTaskDelay(samplingInterval);
   }
 }
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
 JSONVar sensorValues;
-
-SemaphoreHandle_t waterLevelSemaphore;
-Ticker pumpTicker;
 
 long duration;
 float distanceCm;
@@ -162,7 +164,7 @@ void setup()
   pinMode(echoPin, INPUT);
   digitalWrite(relayPin, LOW);
 
-  initFS();
+  /* initFS();
   initWiFi();
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -170,13 +172,13 @@ void setup()
 
   AsyncElegantOTA.begin(&server, "admin", "Abraham456..");
   server.serveStatic("/", SPIFFS, "/");
-
+ */
   waterLevelSemaphore = xSemaphoreCreateMutex();
   pumpTicker.attach_ms(0, []() {}); // initialize ticker
   xTaskCreatePinnedToCore(waterLevelTask, "waterLevelTask", 4096, NULL, 1, NULL, 0);
-
+/* 
   initWebSocket();
-  server.begin();
+  server.begin(); */
 }
 
 void loop()
