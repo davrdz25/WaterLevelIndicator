@@ -15,20 +15,7 @@
 #define ECHO_PIN 22
 #define PUMP_PIN 21
 
-#define MAX_WATER_LEVEL 20 // in cm
-#define PUMP_ON_TIME 900000 // 15 minutes in microseconds
-#define PUMP_OFF_TIME 900000 // 15 minutes in microseconds
-#define WATER_CHECK_INTERVAL 1000 // in milliseconds
-
-TaskHandle_t waterLevelTaskHandle;
-TaskHandle_t pumpOnTaskHandle;
-TaskHandle_t pumpOffTaskHandle;
-
-Ticker waterLevelTicker;
-
-void getWaterLevel();
-void pumpOffTask(void* parameter);
-void pumpOnTask(void* parameter);
+float getWaterLevel();
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
@@ -163,48 +150,27 @@ void setup()
 /* 
   initWebSocket();
   server.begin(); */
-  waterLevelTicker.attach_ms(WATER_CHECK_INTERVAL, getWaterLevel);
+  //pumpOnTimeTicker.attach_ms(PUMP_ON_TIME, pumpOnTask );
+  //pumpOffTimeTicker.attach_ms(PUMP_OFF_TIME, pumpOffTask);
 }
 
 void loop()
 {
-  Serial.printf("Distance: %f \n", distanceCm);
   ws.cleanupClients();
 }
 
-void pumpOnTask(void* parameter) {
-  digitalWrite(PUMP_PIN, HIGH);
-  xTaskCreate(pumpOffTask, "PumpOffTask", 2048, NULL, 1, &pumpOffTaskHandle);
-  vTaskDelete(pumpOnTaskHandle);
-}
-
-void pumpOffTask(void* parameter) {
-  digitalWrite(PUMP_PIN, LOW);
-  xTaskCreate(pumpOnTask, "PumpOnTask", 2048, NULL, 1, &pumpOnTaskHandle);
-  vTaskDelete(pumpOffTaskHandle);
-}
-
-void getWaterLevel() {
-  while (true) {
+float getWaterLevel() {
     // measure distance using HC-SR04
     digitalWrite(TRIG_PIN, LOW);
     delayMicroseconds(2);
     digitalWrite(TRIG_PIN, HIGH);
     delayMicroseconds(10);
     digitalWrite(TRIG_PIN, LOW);
+
     long duration = pulseIn(ECHO_PIN, HIGH);
-    // convert duration to distance in cm
     float distance = duration / 58.0;
-    // check if water level is below threshold
-    if (distance < MAX_WATER_LEVEL) {
-      // stop water level checking
-      waterLevelTicker.detach();
-      // create task to turn on the pump
-      xTaskCreate(pumpOnTask, "PumpOnTask", 2048, NULL, 1, &pumpOnTaskHandle);
-      // delete this task
-      vTaskDelete(waterLevelTaskHandle);
-    }
-    // wait for next water level check
-    vTaskDelay(pdMS_TO_TICKS(WATER_CHECK_INTERVAL));
-  }
+
+    Serial.printf("Distance %f\n", distance);
+
+    return distance;
 }
