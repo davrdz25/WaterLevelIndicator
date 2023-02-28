@@ -9,30 +9,22 @@
 #define LED_BUILTIN 2
 #define SOUND_SPEED 0.034
 
-bool startedPump = false;
-bool suspendedPump = true;
+const int relayPin = 21;
+const int echoPin = 22;
+const int triggPin = 23;
 
-bool ledState;
-void StartPump();
-void SuspendPump();
+const int pumpOnTime = 60000;
+const int pumpOffTime = 60000;
+const int waterLevelThreshold = 20;
+
+float currentWaterLevel = 0;
+
 void GetDistance();
-
-
-void blink()
-{
-  digitalWrite(LED_BUILTIN, ledState);
-  ledState = !ledState;
-}
-
-Ticker timer4(blink, 60000); 
-Ticker timerStartPump(StartPump,1000,0,MILLIS);
-Ticker timerSuspendPump(StartPump,1000,0,MILLIS);
-Ticker timerGetDistance(GetDistance,1000,0,MILLIS);
-
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
 JSONVar sensorValues;
+Ticker pumpTicker;
 
 long duration;
 float distanceCm;
@@ -44,11 +36,6 @@ const char *password = "1234567890";
 /* const char *ssid = "INFINITUM01B6_2.4";
 const char *password = "Tp6Cy6Us1r"; */
 const char *hostname = "ESP32Server";
-
-const int waitTime = 15;
-const int relayPin = 21;
-const int echoPin = 22;
-const int triggPin = 23;
 
 String GetSensorValues()
 {
@@ -169,33 +156,34 @@ void setup()
   initWebSocket();
   server.begin();
 
-  timerGetDistance.start();
+  pumpTicker.attach(pumpOffTime / 1000, stopPump);
 }
 
 void loop()
 {
   Serial.printf("Distance: %f \n", distanceCm);
-  timerGetDistance.update();
-  timerStartPump.update();
+
+  currentWaterLevel = getWaterLevel();
+
+  if (currentWaterLevel < waterLevelThreshold)
+  {
+    if (!pumpTicker.active())
+    {
+      pumpTicker.attach(pumpOnTime / 1000, startPump);
+    }
+  }
+  else
+  {
+    if (pumpTicker.active())
+    {
+      pumpTicker.detach();
+      stopPump();
+    }
+  }
   ws.cleanupClients();
 }
 
-void StartPump()
-{
-  Serial.printf("Waterpumo started time remaining %ui", timerStartPump.remaining());
-}
-
-void SuspendPump()
-{
-  digitalWrite(relayPin, HIGH);
-  relayState = false;
-  suspendedPump = true;
-  startedPump = false;
-  timerStartPump.stop();
-  timerSuspendPump.start();
-}
-
-void GetDistance()
+float getWaterLevel()
 {
   digitalWrite(triggPin, LOW);
   delayMicroseconds(10);
@@ -206,5 +194,15 @@ void GetDistance()
   duration = pulseIn(echoPin, HIGH);
   distanceCm = duration * SOUND_SPEED / 2;
 
-  timerStartPump.start();
+  return distanceCm;
+}
+
+void startPump()
+{
+  digitalWrite(triggPin, HIGH);
+}
+
+void stopPump()
+{
+  digitalWrite(triggPin, LOW);
 }
