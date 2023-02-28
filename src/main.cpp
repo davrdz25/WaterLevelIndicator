@@ -22,13 +22,11 @@ TaskHandle_t pumpOffTaskHandle;
 // define ticker for water level check
 Ticker waterLevelTicker;
 
-
 void pumpOffTask(void* parameter);
 void pumpOnTask(void* parameter);
 
-void* parameter;
 // function to get water level
-void getWaterLevel(void* parameter) {
+void getWaterLevel() {
   while (true) {
     // measure distance using HC-SR04
     digitalWrite(TRIG_PIN, LOW);
@@ -62,7 +60,7 @@ void setup() {
   pinMode(ECHO_PIN, INPUT);
   pinMode(PUMP_PIN, OUTPUT);
   // start water level checking using ticker
-  waterLevelTicker.attach_ms(WATER_CHECK_INTERVAL, getWaterLevel, parameter);
+  waterLevelTicker.attach_ms(WATER_CHECK_INTERVAL, getWaterLevel);
 }
 
 void loop() {
