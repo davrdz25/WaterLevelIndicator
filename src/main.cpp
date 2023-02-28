@@ -13,13 +13,17 @@
 
 #define TRIG_PIN 23
 #define ECHO_PIN 22
-#define PUMP_PIN 21
+#define WATER_PUMP_PIN 21
 
 float getWaterLevel();
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
 JSONVar sensorValues;
+
+SemaphoreHandle_t waterLevelSemaphore;
+SemaphoreHandle_t waterPumpSemaphore;
+Ticker intervalTicker;
 
 long duration;
 float distanceCm;
@@ -31,6 +35,13 @@ const char *password = "1234567890";
 /* const char *ssid = "INFINITUM01B6_2.4";
 const char *password = "Tp6Cy6Us1r"; */
 const char *hostname = "ESP32Server";
+
+const int WATER_LEVEL_SENSOR_PIN = 23;
+const int INTERVAL = 1000; 
+
+void checkWaterLevelTask(void *pvParameters);
+void turnOnWaterPumpTask(void *pvParameters);
+void intervalTickerHandler();
 
 String GetSensorValues()
 {
@@ -152,6 +163,13 @@ void setup()
   server.begin(); */
   //pumpOnTimeTicker.attach_ms(PUMP_ON_TIME, pumpOnTask );
   //pumpOffTimeTicker.attach_ms(PUMP_OFF_TIME, pumpOffTask);
+  waterLevelSemaphore = xSemaphoreCreateBinary();
+  waterPumpSemaphore = xSemaphoreCreateBinary();
+
+  intervalTicker.attach_ms(INTERVAL, intervalTickerHandler);
+
+  xTaskCreate(checkWaterLevelTask, "CheckWaterLevelTask", 2048, NULL, 1, NULL);
+  xTaskCreate(turnOnWaterPumpTask, "TurnOnWaterPumpTask", 2048, NULL, 1, NULL);
 }
 
 void loop()
@@ -173,4 +191,36 @@ float getWaterLevel() {
     Serial.printf("Distance %f\n", distance);
 
     return distance;
+}
+
+void checkWaterLevelTask(void *pvParameters) {
+  for (;;) {
+    xSemaphoreTake(waterLevelSemaphore, portMAX_DELAY);
+
+    int waterLevel = getWaterLevel();
+
+    if (waterLevel < 20) {
+      xSemaphoreGive(waterPumpSemaphore);
+    }
+  }
+}
+
+void turnOnWaterPumpTask(void *pvParameters) {
+  for (;;) {
+    xSemaphoreTake(waterPumpSemaphore, portMAX_DELAY);
+    digitalWrite(WATER_PUMP_PIN, HIGH);
+
+    // Wait for 15 minutes
+    vTaskDelay(INTERVAL);
+
+    // Turn off the water pump
+    digitalWrite(WATER_PUMP_PIN, LOW);
+
+    // Wait for 15 minutes
+    vTaskDelay(INTERVAL);
+  }
+}
+
+void intervalTickerHandler() {
+  xSemaphoreGive(waterLevelSemaphore);
 }
