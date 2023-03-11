@@ -8,6 +8,9 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
+////
+#include <pthread.h>
+
 #define LED_BUILTIN 2
 #define SOUND_SPEED 0.034
 
@@ -17,13 +20,10 @@
 
 float getWaterLevel();
 
+
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
 JSONVar sensorValues;
-
-SemaphoreHandle_t waterLevelSemaphore;
-SemaphoreHandle_t waterPumpSemaphore;
-Ticker intervalTicker;
 
 long duration;
 float distanceCm;
@@ -145,9 +145,10 @@ void setup()
 {
   Serial.begin(115200);
   pinMode(TRIG_PIN, OUTPUT);
-  pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   digitalWrite(ECHO_PIN, LOW);
+
+  xTaskCreatePinnedToCore(checkWaterLevelTask,"waterLevel",1000,NULL,0,NULL,0);
 
   /* initFS();
   initWiFi();
@@ -161,24 +162,15 @@ void setup()
 /* 
   initWebSocket();
   server.begin(); */
-  //pumpOnTimeTicker.attach_ms(PUMP_ON_TIME, pumpOnTask );
-  //pumpOffTimeTicker.attach_ms(PUMP_OFF_TIME, pumpOffTask);
-  waterLevelSemaphore = xSemaphoreCreateBinary();
-  waterPumpSemaphore = xSemaphoreCreateBinary();
-
-  intervalTicker.attach_ms(INTERVAL, intervalTickerHandler);
-
-  xTaskCreate(checkWaterLevelTask, "CheckWaterLevelTask", 2048, NULL, 1, NULL);
-  xTaskCreate(turnOnWaterPumpTask, "TurnOnWaterPumpTask", 2048, NULL, 1, NULL);
 }
 
 void loop()
 {
+  Serial.println("Main Loop");
   ws.cleanupClients();
 }
 
 float getWaterLevel() {
-    // measure distance using HC-SR04
     digitalWrite(TRIG_PIN, LOW);
     delayMicroseconds(2);
     digitalWrite(TRIG_PIN, HIGH);
@@ -193,34 +185,17 @@ float getWaterLevel() {
     return distance;
 }
 
-void checkWaterLevelTask(void *pvParameters) {
-  for (;;) {
-    xSemaphoreTake(waterLevelSemaphore, portMAX_DELAY);
+void checkWaterLevelTask(void* parameters)
+{
+    digitalWrite(TRIG_PIN, LOW);
+    delayMicroseconds(2);
+    digitalWrite(TRIG_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
 
-    int waterLevel = getWaterLevel();
+    long duration = pulseIn(ECHO_PIN, HIGH);
+    float distance = duration / 58.0;
 
-    if (waterLevel < 20) {
-      xSemaphoreGive(waterPumpSemaphore);
-    }
-  }
-}
-
-void turnOnWaterPumpTask(void *pvParameters) {
-  for (;;) {
-    xSemaphoreTake(waterPumpSemaphore, portMAX_DELAY);
-    digitalWrite(WATER_PUMP_PIN, HIGH);
-
-    // Wait for 15 minutes
-    vTaskDelay(INTERVAL);
-
-    // Turn off the water pump
-    digitalWrite(WATER_PUMP_PIN, LOW);
-
-    // Wait for 15 minutes
-    vTaskDelay(INTERVAL);
-  }
-}
-
-void intervalTickerHandler() {
-  xSemaphoreGive(waterLevelSemaphore);
+    Serial.printf("Distance %f\n", distance);
+    delay(1000);
 }
