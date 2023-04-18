@@ -4,12 +4,6 @@
 #include <AsyncElegantOTA.h>
 #include "SPIFFS.h"
 #include <Arduino_JSON.h>
-#include <Ticker.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-
-////
-#include <pthread.h>
 
 #define LED_BUILTIN 2
 #define SOUND_SPEED 0.034
@@ -38,10 +32,6 @@ const char *hostname = "ESP32Server";
 
 const int WATER_LEVEL_SENSOR_PIN = 23;
 const int INTERVAL = 1000; 
-
-void checkWaterLevelTask(void *pvParameters);
-void turnOnWaterPumpTask(void *pvParameters);
-void intervalTickerHandler();
 
 String GetSensorValues()
 {
@@ -148,8 +138,6 @@ void setup()
   pinMode(ECHO_PIN, INPUT);
   digitalWrite(ECHO_PIN, LOW);
 
-  xTaskCreatePinnedToCore(checkWaterLevelTask,"waterLevel",1000,NULL,0,NULL,0);
-
   /* initFS();
   initWiFi();
 
@@ -183,19 +171,4 @@ float getWaterLevel() {
     Serial.printf("Distance %f\n", distance);
 
     return distance;
-}
-
-void checkWaterLevelTask(void* parameters)
-{
-    digitalWrite(TRIG_PIN, LOW);
-    delayMicroseconds(2);
-    digitalWrite(TRIG_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIG_PIN, LOW);
-
-    long duration = pulseIn(ECHO_PIN, HIGH);
-    float distance = duration / 58.0;
-
-    Serial.printf("Distance %f\n", distance);
-    delay(1000);
 }
