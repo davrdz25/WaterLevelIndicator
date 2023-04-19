@@ -11,7 +11,7 @@
 #define TRIG_PIN 23
 #define ECHO_PIN 22
 #define WATER_PUMP_PIN 21
-#define TANK_HEIGHT_CM 130
+#define TANK_HEIGHT_CM 150
 #define LEVEL_WARNING_CM 20
 
 AsyncWebServer server(8081);
@@ -21,6 +21,8 @@ JSONVar sensorValues;
 long duration;
 float distanceCm;
 float waterLevelPercent = 0.00;
+bool AutoMode;
+int WaterPumpState;
 
 String message = "";
 // const char *ssid = "Xiaomi_7D23";
@@ -35,13 +37,38 @@ const int INTERVAL = 1000;
 void TurnOnWaterPump()
 {
   digitalWrite(WATER_PUMP_PIN, LOW);
-  sensorValues["WaterPumpState"] = "ON";
+  sensorValues["WaterPumpState"] = 1;
 }
 
 void TurnOffWaterPump()
 {
   digitalWrite(WATER_PUMP_PIN, HIGH);
-  sensorValues["WaterPumpState"] = "OFF";
+  sensorValues["WaterPumpState"] = 0;
+}
+
+void ToggleAutoMode(bool _onoff)
+{
+  AutoMode = _onoff;
+
+  if(AutoMode && WaterPumpState == 0)
+    TurnOnWaterPump();
+
+  sensorValues["AutoMode"] = (AutoMode ? "ON" : "OFF");
+  sensorValues["WaterPumpState"] = (!AutoMode && WaterPumpState == -1) ? 0 : 1;
+}
+
+void ToggleWaterPumpRest(bool _yesno)
+{
+  if(_yesno)
+  {
+    TurnOffWaterPump();
+    sensorValues["WaterPumpState"] = AutoMode ? -1 : 0;
+  }
+  else
+  {
+    TurnOnWaterPump();
+    sensorValues["WaterPumpState"] = 1;
+  }
 }
 
 void GetWaterLevel() {
@@ -95,7 +122,7 @@ void initWiFi()
   while (WiFi.status() != WL_CONNECTED)
   {
     Serial.print('.');
-    delay(1000);
+    delay(900);
   }
 
   Serial.printf("\nConnected to %s \n", ssid);
@@ -132,6 +159,30 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
     if (message.indexOf("WD") >= 0)
     {
       GetWaterLevel();
+      notifyClients(GetSensorValues());
+    }
+
+    if(message.indexOf("AutoON") >= 0)
+    {
+      ToggleAutoMode(true);
+      notifyClients(GetSensorValues());
+    }
+
+    if(message.indexOf("AutoOFF") >= 0)
+    {
+      ToggleAutoMode(false);
+      notifyClients(GetSensorValues());
+    }
+
+    if(message.indexOf("RestYes") >= 0)
+    {
+      ToggleWaterPumpRest(true);
+      notifyClients(GetSensorValues());
+    }
+
+    if(message.indexOf("RestNo") >= 0)
+    {
+      ToggleWaterPumpRest(false);
       notifyClients(GetSensorValues());
     }
 

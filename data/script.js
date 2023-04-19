@@ -8,55 +8,40 @@ var gateway = `ws://${window.location.hostname}:8081/ws`;
 var WaterDistanceCM;
 var LevelPrcnt;
 var WaterPumpPowerOn
-var WaterPumpRest = false
+var WaterPumpState
 var AutoEnable
 
 window.addEventListener('load', onload);
 
 const ToogleWaterPump = () => {
-    if(!WaterPumpPowerOn && !WaterPumpRest) {
-        websocket.send("turnOn")
-    }
-
-    if(WaterPumpPowerOn || WaterDistanceCM <= 20){
+    if(WaterPumpState == 1){
         setTimeout(() => {
-            WaterPumpRest = true
-            websocket.send("turnOff")
+            websocket.send("RestYes")
         },5000)
     }
 
-    if(!WaterPumpPowerOn && WaterDistanceCM >= 20){
+    if(WaterPumpState == -1){
         setTimeout(() => {
-            websocket.send("turnOn")
+            websocket.send("RestNo")
         },5000)
     }
-    
 }
 
 setInterval(() => {
     getValues()
 
-    if(WaterDistanceCM <= 20 && WaterPumpPowerOn){
-        websocket.send("turnOff")
-        WaterPumpRest = false
-        document.getElementById("swtToggleWaterPump").disabled = true
-        document.getElementById("swtAutoEnable").disabled = true
-
-    }
-
-    if(AutoEnable){
+    if(AutoEnable)
         ToogleWaterPump()
-    }
-},1500)
+
+},2000)
 
 document.getElementById("swtAutoEnable").addEventListener("change",(e) => {
     if(e.currentTarget.checked){
-        AutoEnable = true
-
+        websocket.send("AutoON")
         ToogleWaterPump()
     }
     else
-        AutoEnable = false
+        websocket.send("AutoOFF")
 })
 
 document.getElementById("swtToggleWaterPump").addEventListener("change", (e) => {
@@ -65,7 +50,6 @@ document.getElementById("swtToggleWaterPump").addEventListener("change", (e) => 
 
     if(!e.currentTarget.checked)
         websocket.send("turnOff")
-
 })
 
 function onload(event) {
@@ -97,17 +81,16 @@ function onClose(event) {
 function onMessage(event) {
     var myObj = JSON.parse(event.data);
 
+    console.log(myObj)
     document.getElementById("lblWaterDistance").innerText = myObj["WaterDistance"]
     document.getElementById("lblLevelPercent").innerText = (100 - myObj["LevelPercent"]) + "%"
     document.getElementById("divLevel").style.height = (100 - myObj["LevelPercent"]) + "%"
-    document.getElementById("swtToggleWaterPump").checked = myObj["WaterPumpState"] === "ON" ? true : false
-    document.getElementById("lblWaterPumpState").innerText = myObj["WaterPumpState"] === "ON" ? "Encendida" : "Apagada"
+    document.getElementById("lblWaterPumpState").innerText = myObj["WaterPumpState"] === 1 ? "Encendida" : myObj["WaterPumpState"] === -1 ? "En reposo" : "Apagada"
+
+    document.getElementById("swtToggleWaterPump").checked = myObj["WaterPumpState"] ==  1 ? true : false
+    document.getElementById("swtAutoEnable").checked = myObj["AutoMode"] === "ON" ? true : false
 
     WaterDistanceCM = myObj["WaterDistance"]
-    WaterPumpPowerOn = myObj["WaterPumpState"] === "ON" ? true : false
-
-    if(myObj["WaterDistance"] >= 20)
-        document.getElementById("swtToggleWaterPump").disabled = false
-    else
-        document.getElementById("swtToggleWaterPump").disabled = true
+    WaterPumpState = myObj["WaterPumpState"]
+    AutoEnable = myObj["AutoMode"] === "ON" ? true : false
 }
