@@ -22,7 +22,6 @@ long duration;
 float distanceCm;
 float waterLevelPercent = 0.00;
 
-
 String message = "";
 // const char *ssid = "Xiaomi_7D23";
 // const char *password = "1234567890";
@@ -69,6 +68,7 @@ String GetSensorValues()
 {
   GetWaterLevel();
   String jsonString = JSON.stringify(sensorValues);
+  Serial.println(jsonString);
   return jsonString;
 }
 
