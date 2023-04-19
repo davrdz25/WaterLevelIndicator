@@ -3,37 +3,31 @@
 <head>
     <title>ESP IOT DASHBOARD</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
     <div class="topnav">
-        <h1>Multiple Sliders</h1>
+        <h1>Nivel de agua</h1>
     </div>
     <div class="content">
-        <div class="card-grid">
-            <div class="card">
-                <p class="card-title"> Fader 3</p>
-                <p class="switch">
-                    <input onshow="updateDistance(this)" disabled id="waterLevel" min="0" max="100" step="1" value="0">
-                </p>
-                <p class="state">Brightness: <span id="level"></span> &percnt;</p>
-            </div>
+        <div style="display: flex; flex-direction: row;">
+            <label style="margin: auto;">Estado de la bomba: </label>
+            <label id="lblWaterPumpState" style="margin: auto;"></label>
+            <label  style="margin: auto;" class="switch">
+                <input id="swtToggleWaterPump" type="checkbox">
+                <span class="slider round"></span>
+              </label>
         </div>
-        <div class="card-grid">
-            <div class="card">
-                <p class="card-title"> Fader 3</p>
-                <p class="switch">
-                    <label class="switch">
-                        <input id="relayState" type="checkbox">
-                        <span class="slider round"></span>
-                    </label>
-                </p>
-                <p class="state">Brightness: <span id="level"></span> &percnt;</p>
-            </div>
+        <div style="display: flex; flex-direction: row;">
+            <label style="margin: auto;">Nivel de agua: </label>
+            <label id="lblWaterDistance" style="margin: auto;"></label>
+            <label id="lblLevelPercent" style="margin: auto;"></label>
+        </div>
+        <div id="lblWaterLevel"></div>
+        <div class="level-cnt">
+            <div id="divLevel" class="level-ind"></div>
         </div>
     </div>
     <script src="script.js"></script>
 </body>
-
 </html>
