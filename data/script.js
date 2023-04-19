@@ -3,29 +3,33 @@ const lvlIndicator = document.getElementById("divLevel")
 const lblWaterDistance = document.getElementById("lblWaterDistance")
 const lblLevelPercent = document.getElementById("lblLevelPercent")
 
+
 var gateway = `ws://${window.location.hostname}:8081/ws`;
-var websocket;
-var nIntervId;
-var waterPumpTurnedOn
-var elapsedTime
-var remaingTime
-var waterDistanceCM
-var LevelPercent
+var WaterDistanceCM;
+var LevelPrcnt;
+var WaterPumpPowerOn
+var WaterPumpRest
+var AutoEnable
 
 window.addEventListener('load', onload);
 
 setInterval(() => {
     getValues()
-},10000)
+},1500)
 
-swtWaterPump.addEventListener("change", (e) => {
-    if(e.currentTarget.checked){
+document.getElementById("swtAutoEnable").addEventListener("change",(e) => {
+    if(e.currentTarget.checked)
+        AutoEnable = true
+    else
+        AutoEnable = false
+})
+
+document.getElementById("swtToggleWaterPump").addEventListener("change", (e) => {
+    if(e.currentTarget.checked)
         websocket.send("turnOn")
-    }
 
-    if(!e.currentTarget.checked){
+    if(!e.currentTarget.checked)
         websocket.send("turnOff");
-    }
 })
 
 function onload(event) {
@@ -62,4 +66,7 @@ function onMessage(event) {
     document.getElementById("divLevel").style.height = myObj["LevelPercent"] + "%"
     document.getElementById("swtToggleWaterPump").checked = myObj["WaterPumpState"] === "ON" ? true : false
     document.getElementById("lblWaterPumpState").innerText = myObj["WaterPumpState"] === "ON" ? "Encendida" : "Apagada"
+
+    WaterDistanceCM = myObj["WaterDistance"]
+    WaterPumpPowerOn = myObj["WaterPumpState"] === "ON" ? true : false
 }
