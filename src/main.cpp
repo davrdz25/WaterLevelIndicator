@@ -43,7 +43,7 @@ void TurnOnWaterPump()
 void TurnOffWaterPump()
 {
   digitalWrite(WATER_PUMP_PIN, HIGH);
-  sensorValues["WaterPumpState"] = 0;
+  sensorValues["WaterPumpState"] = AutoMode ? -1 : 0;
 }
 
 void ToggleAutoMode(bool _onoff)
@@ -53,8 +53,10 @@ void ToggleAutoMode(bool _onoff)
   if(AutoMode && WaterPumpState == 0)
     TurnOnWaterPump();
 
+  if(!AutoMode && WaterPumpState == -1)
+    sensorValues["WaterPumpState"] = 0;
+
   sensorValues["AutoMode"] = (AutoMode ? "ON" : "OFF");
-  sensorValues["WaterPumpState"] = (!AutoMode && WaterPumpState == -1) ? 0 : 1;
 }
 
 void ToggleWaterPumpRest(bool _yesno)
@@ -62,12 +64,10 @@ void ToggleWaterPumpRest(bool _yesno)
   if(_yesno)
   {
     TurnOffWaterPump();
-    sensorValues["WaterPumpState"] = AutoMode ? -1 : 0;
   }
   else
   {
     TurnOnWaterPump();
-    sensorValues["WaterPumpState"] = 1;
   }
 }
 

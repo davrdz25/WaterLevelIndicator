@@ -38,7 +38,6 @@ setInterval(() => {
 document.getElementById("swtAutoEnable").addEventListener("change",(e) => {
     if(e.currentTarget.checked){
         websocket.send("AutoON")
-        ToogleWaterPump()
     }
     else
         websocket.send("AutoOFF")
