@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <AsyncTCP.h>
-#include <AsyncElegantOTA.h>
+#include <ESPAsyncWebServer.h>
 #include "SPIFFS.h"
 #include <Arduino_JSON.h>
 
@@ -11,9 +11,8 @@
 #define TRIG_PIN 23
 #define ECHO_PIN 22
 #define WATER_PUMP_PIN 21
-
-float getWaterLevel();
-
+#define TANK_HEIGHT_CM 130
+#define LEVEL_WARNING_CM 20
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
@@ -21,26 +20,55 @@ JSONVar sensorValues;
 
 long duration;
 float distanceCm;
-bool relayState;
+float waterLevelPercent = 0.00;
+
 
 String message = "";
-const char *ssid = "Xiaomi_7D23";
-const char *password = "1234567890";
-/* const char *ssid = "INFINITUM01B6_2.4";
-const char *password = "Tp6Cy6Us1r"; */
+// const char *ssid = "Xiaomi_7D23";
+// const char *password = "1234567890";
+const char *ssid = "INFINITUM01B6_2.4";
+const char *password = "Tp6Cy6Us1r"; 
 const char *hostname = "ESP32Server";
 
 const int WATER_LEVEL_SENSOR_PIN = 23;
 const int INTERVAL = 1000; 
 
+void TurnOnWaterPump()
+{
+  digitalWrite(WATER_PUMP_PIN, LOW);
+  sensorValues["WaterPumpState"] = "ON";
+}
+
+void TurnOffWaterPump()
+{
+  digitalWrite(WATER_PUMP_PIN, HIGH);
+  sensorValues["WaterPumpState"] = "OFF";
+}
+
+void GetWaterLevel() {
+    digitalWrite(TRIG_PIN, LOW);
+    delayMicroseconds(2);
+    digitalWrite(TRIG_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
+
+    long duration = pulseIn(ECHO_PIN, HIGH);
+    distanceCm = duration / 58.0;
+
+    waterLevelPercent = distanceCm * 100 / TANK_HEIGHT_CM;
+
+    Serial.printf("Water distance: %f \n",  distanceCm);
+    Serial.printf("Level percent: %.f \n", waterLevelPercent);
+
+    sensorValues["WaterDistance"] = String(distanceCm);
+    sensorValues["LevelPercent"] =  String(waterLevelPercent);
+}
+
+
 String GetSensorValues()
 {
-  sensorValues["WaterDistance"] = String(distanceCm);
-  sensorValues["RelayState"] = relayState;
-
+  GetWaterLevel();
   String jsonString = JSON.stringify(sensorValues);
-  Serial.println(sensorValues);
-
   return jsonString;
 }
 
@@ -70,7 +98,7 @@ void initWiFi()
     delay(1000);
   }
 
-  Serial.printf("\nConnected to %s \n", &ssid);
+  Serial.printf("\nConnected to %s \n", ssid);
   Serial.println(WiFi.localIP());
   Serial.println(WiFi.macAddress());
   Serial.println(WiFi.getHostname());
@@ -88,14 +116,22 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
   {
     data[len] = 0;
     message = (char *)data;
-
-    if (message.indexOf("WD") >= 0)
+    
+    if(message.indexOf("turnOn") >= 0)
     {
+      TurnOnWaterPump();
       notifyClients(GetSensorValues());
     }
 
-    if (message.indexOf("RS") >= 0)
+    if(message.indexOf("turnOff") >= 0)
     {
+      TurnOffWaterPump();
+      notifyClients(GetSensorValues());
+    }
+
+    if (message.indexOf("WD") >= 0)
+    {
+      GetWaterLevel();
       notifyClients(GetSensorValues());
     }
 
@@ -136,39 +172,24 @@ void setup()
   Serial.begin(115200);
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
+  pinMode(WATER_PUMP_PIN, OUTPUT);
+
+  digitalWrite(WATER_PUMP_PIN, HIGH);
   digitalWrite(ECHO_PIN, LOW);
 
-  /* initFS();
+  initFS();
   initWiFi();
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/index.html", "text/html"); });
 
-  AsyncElegantOTA.begin(&server, "admin", "Abraham456..");
   server.serveStatic("/", SPIFFS, "/");
- */
-/* 
+ 
   initWebSocket();
-  server.begin(); */
+  server.begin();
 }
 
 void loop()
 {
-  Serial.println("Main Loop");
   ws.cleanupClients();
-}
-
-float getWaterLevel() {
-    digitalWrite(TRIG_PIN, LOW);
-    delayMicroseconds(2);
-    digitalWrite(TRIG_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIG_PIN, LOW);
-
-    long duration = pulseIn(ECHO_PIN, HIGH);
-    float distance = duration / 58.0;
-
-    Serial.printf("Distance %f\n", distance);
-
-    return distance;
 }
