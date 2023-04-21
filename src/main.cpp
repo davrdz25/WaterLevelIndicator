@@ -36,12 +36,12 @@ String message = "";
 // const char *ssid = "Xiaomi_7D23";
 // const char *password = "1234567890";
 
-const char *ssid = "INFINITUM39C4_2.4";
-const char *password = "44VYPcV77T";
+/* const char *ssid = "INFINITUM39C4_2.4";
+const char *password = "44VYPcV77T"; */
 
-/* const char *ssid = "INFINITUM01B6_2.4";
+const char *ssid = "INFINITUM01B6_2.4";
 const char *password = "Tp6Cy6Us1r";
- */
+
 const char *hostname = "ESP32Server";
 
 const int WATER_LEVEL_SENSOR_PIN = 23;

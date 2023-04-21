@@ -79,7 +79,7 @@ function onMessage(event) {
         document.getElementById("swtToggleWaterPump").disabled = true
     } else {
         document.querySelector(".slider").style.backgroundColor = myObj["WaterPumpState"] === 1 ? "#0f0" : myObj["FullTank"] ? "#f00" : "#ccc"
-        document.getElementById("swtToggleWaterPump").disabled = false   
+        document.getElementById("swtToggleWaterPump").disabled = myObj["FullTank"] ? true : false   
     }
 
     document.getElementById("lblAutoEnable").innerText = myObj["autoEnabled"] ? "Activado" : "Apagado/Encendido manual de la bomba"
