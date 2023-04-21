@@ -14,8 +14,8 @@
 #define WATER_PUMP_PIN 21
 #define TANK_HEIGHT_CM 150
 #define LEVEL_WARNING_CM 30
-#define TURN_ON_TIME_SECS 900
-#define SUSPENDED_TIME_SECS 600
+#define TURN_ON_TIME_SECS 1200
+#define SUSPENDED_TIME_SECS 900
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
@@ -85,6 +85,7 @@ void initWiFi()
 
   while (WiFi.status() != WL_CONNECTED)
   {
+    digitalWrite(LED_BUILTIN,LOW);
     Serial.print('.');
     delay(900);
   }
@@ -93,6 +94,9 @@ void initWiFi()
   Serial.println(WiFi.localIP());
   Serial.println(WiFi.macAddress());
   Serial.println(WiFi.getHostname());
+
+  digitalWrite(LED_BUILTIN, HIGH);
+
 }
 
 void notifyClients(String sliderValues)
@@ -207,9 +211,12 @@ void setup()
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   pinMode(WATER_PUMP_PIN, OUTPUT);
+  pinMode(LED_BUILTIN,OUTPUT);
+
 
   digitalWrite(WATER_PUMP_PIN, HIGH);
   digitalWrite(ECHO_PIN, LOW);
+  digitalWrite(LED_BUILTIN, LOW);
 
   initFS();
   initWiFi();
@@ -236,7 +243,7 @@ void TurnOnWaterPump()
 
   if(autoEnabled)
   {
-    TickerTurnOffWaterPump.once(10, TurnOffWaterPump);
+    TickerTurnOffWaterPump.once(TURN_ON_TIME_SECS, TurnOffWaterPump);
   }
   
   notifyClients(GetSensorValues());
@@ -250,7 +257,7 @@ void TurnOffWaterPump()
   if(autoEnabled)
   {
     WaterPumpState = -1;
-    TickerTurnOnWaterPump.once(10, TurnOnWaterPump);
+    TickerTurnOnWaterPump.once(SUSPENDED_TIME_SECS, TurnOnWaterPump);
   }
 
   notifyClients(GetSensorValues());
