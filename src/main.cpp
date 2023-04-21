@@ -9,9 +9,9 @@
 #define LED_BUILTIN 2
 #define SOUND_SPEED 0.034
 
-#define TRIG_PIN 23
-#define ECHO_PIN 22
-#define WATER_PUMP_PIN 21
+#define TRIG_PIN 23 //YELLOW
+#define ECHO_PIN 22 //GREEN
+#define WATER_PUMP_PIN 21 //ORANGE
 #define TANK_HEIGHT_CM 150
 #define LEVEL_WARNING_CM 30
 #define TURN_ON_TIME_SECS 1200
