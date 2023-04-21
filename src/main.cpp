@@ -4,6 +4,7 @@
 #include <ESPAsyncWebServer.h>
 #include "SPIFFS.h"
 #include <Arduino_JSON.h>
+#include <Ticker.h>
 
 #define LED_BUILTIN 2
 #define SOUND_SPEED 0.034
@@ -12,90 +13,53 @@
 #define ECHO_PIN 22
 #define WATER_PUMP_PIN 21
 #define TANK_HEIGHT_CM 150
-#define LEVEL_WARNING_CM 20
+#define LEVEL_WARNING_CM 30
+#define TURN_ON_TIME_SECS 900
+#define SUSPENDED_TIME_SECS 600
 
 AsyncWebServer server(8081);
 AsyncWebSocket ws("/ws");
 JSONVar sensorValues;
 
-long duration;
-float distanceCm;
-float waterLevelPercent = 0.00;
-bool AutoMode;
+Ticker TickerGetWaterLevel;
+Ticker TickerTurnOnWaterPump;
+Ticker TickerTurnOffWaterPump;
+
+bool autoEnabled;
+bool FullTank = false;
+int waterLevelPercent = 0;
+int distanceCm = 0;
 int WaterPumpState;
+long duration = 0;
 
 String message = "";
 // const char *ssid = "Xiaomi_7D23";
 // const char *password = "1234567890";
-const char *ssid = "INFINITUM01B6_2.4";
-const char *password = "Tp6Cy6Us1r"; 
+
+const char *ssid = "INFINITUM39C4_2.4";
+const char *password = "44VYPcV77T";
+
+/* const char *ssid = "INFINITUM01B6_2.4";
+const char *password = "Tp6Cy6Us1r";
+ */
 const char *hostname = "ESP32Server";
 
 const int WATER_LEVEL_SENSOR_PIN = 23;
-const int INTERVAL = 1000; 
+const int INTERVAL = 1000;
 
-void TurnOnWaterPump()
-{
-  digitalWrite(WATER_PUMP_PIN, LOW);
-  sensorValues["WaterPumpState"] = 1;
-}
-
-void TurnOffWaterPump()
-{
-  digitalWrite(WATER_PUMP_PIN, HIGH);
-  sensorValues["WaterPumpState"] = AutoMode ? -1 : 0;
-}
-
-void ToggleAutoMode(bool _onoff)
-{
-  AutoMode = _onoff;
-
-  if(AutoMode && WaterPumpState == 0)
-    TurnOnWaterPump();
-
-  if(!AutoMode && WaterPumpState == -1)
-    sensorValues["WaterPumpState"] = 0;
-
-  sensorValues["AutoMode"] = (AutoMode ? "ON" : "OFF");
-}
-
-void ToggleWaterPumpRest(bool _yesno)
-{
-  if(_yesno)
-  {
-    TurnOffWaterPump();
-  }
-  else
-  {
-    TurnOnWaterPump();
-  }
-}
-
-void GetWaterLevel() {
-    digitalWrite(TRIG_PIN, LOW);
-    delayMicroseconds(2);
-    digitalWrite(TRIG_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIG_PIN, LOW);
-
-    long duration = pulseIn(ECHO_PIN, HIGH);
-    distanceCm = duration / 58.0;
-
-    waterLevelPercent = distanceCm * 100 / TANK_HEIGHT_CM;
-
-    Serial.printf("Water distance: %f \n",  distanceCm);
-    Serial.printf("Level percent: %.f \n", waterLevelPercent);
-
-    sensorValues["WaterDistance"] = String(distanceCm);
-    sensorValues["LevelPercent"] =  String(waterLevelPercent);
-}
-
+void TurnOnWaterPump();
+void TurnOffWaterPump();
 
 String GetSensorValues()
 {
-  GetWaterLevel();
   String jsonString = JSON.stringify(sensorValues);
-  Serial.println(jsonString);
+
+  sensorValues["autoEnabled"] = autoEnabled;
+  sensorValues["WaterDistance"] = String(distanceCm);
+  sensorValues["LevelPercent"] = String(waterLevelPercent);
+  sensorValues["WaterPumpState"] = WaterPumpState;
+  sensorValues["FullTank"] = FullTank;
+
   return jsonString;
 }
 
@@ -143,47 +107,42 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
   {
     data[len] = 0;
     message = (char *)data;
-    
-    if(message.indexOf("turnOn") >= 0)
-    {
+
+    if (message.indexOf("turnOnPump") >= 0)
       TurnOnWaterPump();
-      notifyClients(GetSensorValues());
-    }
 
-    if(message.indexOf("turnOff") >= 0)
+    if (message.indexOf("turnOffPump") >= 0)
     {
+
+      if(TickerTurnOffWaterPump.active())
+        TickerTurnOffWaterPump.detach();
+      
+      if(TickerTurnOffWaterPump.active())
+        TickerTurnOffWaterPump.detach();
+      
+      if(autoEnabled)
+        WaterPumpState = -1;
+      else
+        WaterPumpState = 0;
+
       TurnOffWaterPump();
-      notifyClients(GetSensorValues());
     }
 
-    if (message.indexOf("WD") >= 0)
+    if(message.indexOf("autoEnabled") >= 0)
     {
-      GetWaterLevel();
-      notifyClients(GetSensorValues());
+      autoEnabled = true;
+
+      if(WaterPumpState == 0)
+        TurnOnWaterPump();
+
     }
 
-    if(message.indexOf("AutoON") >= 0)
+    if(message.indexOf("autoDisabled") >= 0)
     {
-      ToggleAutoMode(true);
-      notifyClients(GetSensorValues());
-    }
-
-    if(message.indexOf("AutoOFF") >= 0)
-    {
-      ToggleAutoMode(false);
-      notifyClients(GetSensorValues());
-    }
-
-    if(message.indexOf("RestYes") >= 0)
-    {
-      ToggleWaterPumpRest(true);
-      notifyClients(GetSensorValues());
-    }
-
-    if(message.indexOf("RestNo") >= 0)
-    {
-      ToggleWaterPumpRest(false);
-      notifyClients(GetSensorValues());
+      autoEnabled = false;
+      
+      if(WaterPumpState == 1)
+        TurnOffWaterPump();
     }
 
     if (strcmp((char *)data, "getValues") == 0)
@@ -218,9 +177,33 @@ void initWebSocket()
   server.addHandler(&ws);
 }
 
+void GetWaterLevel()
+{
+
+  if(distanceCm <= 30){
+    autoEnabled = false;
+    FullTank = true;
+    TurnOffWaterPump();
+  } else
+    FullTank = false;
+
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  long duration = pulseIn(ECHO_PIN, HIGH);
+
+  distanceCm = duration / 58.0;
+  waterLevelPercent = distanceCm * 100 / TANK_HEIGHT_CM;
+}
+
 void setup()
 {
   Serial.begin(115200);
+  TickerGetWaterLevel.attach(1,GetWaterLevel);
+
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   pinMode(WATER_PUMP_PIN, OUTPUT);
@@ -235,7 +218,7 @@ void setup()
             { request->send(SPIFFS, "/index.html", "text/html"); });
 
   server.serveStatic("/", SPIFFS, "/");
- 
+
   initWebSocket();
   server.begin();
 }
@@ -243,4 +226,32 @@ void setup()
 void loop()
 {
   ws.cleanupClients();
+}
+
+void TurnOnWaterPump()
+{
+  digitalWrite(WATER_PUMP_PIN, LOW);
+
+  WaterPumpState = 1;
+
+  if(autoEnabled)
+  {
+    TickerTurnOffWaterPump.once(10, TurnOffWaterPump);
+  }
+  
+  notifyClients(GetSensorValues());
+}
+
+void TurnOffWaterPump()
+{
+  WaterPumpState = 0;
+  digitalWrite(WATER_PUMP_PIN, HIGH);
+
+  if(autoEnabled)
+  {
+    WaterPumpState = -1;
+    TickerTurnOnWaterPump.once(10, TurnOnWaterPump);
+  }
+
+  notifyClients(GetSensorValues());
 }

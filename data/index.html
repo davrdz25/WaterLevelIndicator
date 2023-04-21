@@ -10,26 +10,44 @@
         <h1>Nivel de agua</h1>
     </div>
     <div class="content">
-        <div style="display: flex; flex-direction: row;">
-            <label style="margin: auto;">Estado de la bomba: </label>
-            <label id="lblWaterPumpState" style="margin: auto;"></label>
-            <label  style="margin: auto;" class="switch">
-                <input id="swtToggleWaterPump" type="checkbox">
-                <span class="slider round"></span>
-              </label>
+        <div class="row">
+            <div class="row-child">
+                <label>Estado de la bomba: </label>
+            </div>
+            <div class="row-child">
+                <label id="lblWaterPumpState"></label>
+            </div>
+            <div class="row-child">
+                <label  class="switch">
+                    <input id="swtToggleWaterPump" type="checkbox">
+                    <span class="slider round"></span>
+                  </label>
+            </div>
         </div>
-        <div style="display: flex; flex-direction: row;">
-            <label style="margin: auto;">Modo automatico </label>
-            <label id="lblAutoEnable" style="margin: auto;"></label>
-            <label  style="margin: auto;" class="switch">
-                <input id="swtAutoEnable" type="checkbox">
-                <span class="slider round"></span>
-              </label>
+        <div class="row">
+            <div class="row-child">
+                <label>Modo automatico</label>
+            </div>
+            <div class="row-child">
+                <label id="lblAutoEnable"></label>
+            </div>
+            <div class="row-child">
+                <label  class="switch">
+                    <input id="swtAutoEnable" type="checkbox">
+                    <span id="spnAutoEnable" class="slider round"></span>
+                  </label>
+            </div>
         </div>
-        <div style="display: flex; flex-direction: row;">
-            <label style="margin: auto;">Nivel de agua: </label>
-            <label id="lblWaterDistance" style="margin: auto;width: 75%;"></label>
-            <label id="lblLevelPercent" style="margin: auto;"></label>
+        <div class="row">
+            <div class="row-child">
+                <label>Nivel de agua: </label>
+            </div>
+            <div class="row-child">
+                <label id="lblWaterDistance"></label>
+            </div>
+            <div class="row-child">
+                <label id="lblLevelPercent"></label>
+            </div>
         </div>
         <div id="lblWaterLevel"></div>
         <div class="level-cnt">

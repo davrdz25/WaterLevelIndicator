@@ -1,62 +1,9 @@
-const swtWaterPump = document.getElementById("swtToggleWaterPump")
-const lvlIndicator = document.getElementById("divLevel")
-const lblWaterDistance = document.getElementById("lblWaterDistance")
-const lblLevelPercent = document.getElementById("lblLevelPercent")
-
-
 var gateway = `ws://${window.location.hostname}:8081/ws`;
-var WaterDistanceCM;
-var LevelPrcnt;
-var WaterPumpPowerOn
-var WaterPumpState
-var AutoEnable
 
 window.addEventListener('load', onload);
 
-const ToogleWaterPump = () => {
-    if(WaterPumpState == 1){
-        setTimeout(() => {
-            websocket.send("RestYes")
-        },5000)
-    }
-
-    if(WaterPumpState == -1){
-        setTimeout(() => {
-            websocket.send("RestNo")
-        },5000)
-    }
-}
-
-setInterval(() => {
-    getValues()
-
-    if(AutoEnable)
-        ToogleWaterPump()
-
-},2000)
-
-document.getElementById("swtAutoEnable").addEventListener("change",(e) => {
-    if(e.currentTarget.checked){
-        websocket.send("AutoON")
-    }
-    else
-        websocket.send("AutoOFF")
-})
-
-document.getElementById("swtToggleWaterPump").addEventListener("change", (e) => {
-    if(e.currentTarget.checked)
-        websocket.send("turnOn")
-
-    if(!e.currentTarget.checked)
-        websocket.send("turnOff")
-})
-
 function onload(event) {
     initWebSocket();
-}
-
-function getValues() {
-    websocket.send("getValues");
 }
 
 function initWebSocket() {
@@ -66,6 +13,11 @@ function initWebSocket() {
     websocket.onclose = onClose;
     websocket.onmessage = onMessage;
 }
+
+function getValues() {
+    websocket.send("getValues");
+}
+
 
 function onOpen(event) {
     console.log('Connection opened');
@@ -80,16 +32,83 @@ function onClose(event) {
 function onMessage(event) {
     var myObj = JSON.parse(event.data);
 
-    console.log(myObj)
+    if(myObj["FullTank"]){
+        document.getElementById("swtAutoEnable").disabled = true
+        document.getElementById("swtAutoEnable").checked = false
+
+        document.getElementById("swtToggleWaterPump").disabled = true
+        document.getElementById("swtToggleWaterPump").checked = false
+
+        var sliders = document.querySelectorAll(".slider")
+
+        sliders.forEach(slider => {
+            slider.style.backgroundColor = "#f00"
+        });
+    } else {
+        document.getElementById("swtAutoEnable").disabled = false
+        document.getElementById("swtToggleWaterPump").disabled = false
+
+        var sliders = document.querySelectorAll(".slider")
+
+        sliders.forEach(slider => {
+            slider.style.backgroundColor = "#ccc"
+        }); 
+    }
+
     document.getElementById("lblWaterDistance").innerText = myObj["WaterDistance"]
     document.getElementById("lblLevelPercent").innerText = (100 - myObj["LevelPercent"]) + "%"
     document.getElementById("divLevel").style.height = (100 - myObj["LevelPercent"]) + "%"
-    document.getElementById("lblWaterPumpState").innerText = myObj["WaterPumpState"] === 1 ? "Encendida" : myObj["WaterPumpState"] === -1 ? "En reposo" : "Apagada"
 
-    document.getElementById("swtToggleWaterPump").checked = myObj["WaterPumpState"] ==  1 ? true : false
-    document.getElementById("swtAutoEnable").checked = myObj["AutoMode"] === "ON" ? true : false
+    if (myObj["WaterPumpState"] === 1){
+        document.getElementById("lblWaterPumpState").innerText = "Encendida"
+        document.getElementById("swtToggleWaterPump").checked = true
+    }
 
-    WaterDistanceCM = myObj["WaterDistance"]
-    WaterPumpState = myObj["WaterPumpState"]
-    AutoEnable = myObj["AutoMode"] === "ON" ? true : false
+    if (myObj["WaterPumpState"] === 0 || myObj["WaterPumpState"] === undefined){
+        document.getElementById("lblWaterPumpState").innerText = "Apagada"
+        document.getElementById("swtToggleWaterPump").checked = false
+    }
+
+    if (myObj["WaterPumpState"] === -1)
+        document.getElementById("lblWaterPumpState").innerText = "Suspendida"
+ 
+
+    if(myObj["autoEnabled"]){
+        document.querySelector(".slider").style.backgroundColor = myObj["WaterPumpState"] == 1 ? "#0f0" : myObj["WaterPumpState"] == -1 ? "#ff0" : "#ccc"
+        document.getElementById("spnAutoEnable").style.backgroundColor = "#2196F3"
+        document.getElementById("swtToggleWaterPump").disabled = true
+    } else {
+        document.querySelector(".slider").style.backgroundColor = myObj["WaterPumpState"] === 1 ? "#0f0" : myObj["FullTank"] ? "#f00" : "#ccc"
+        document.getElementById("swtToggleWaterPump").disabled = false   
+    }
+
+    document.getElementById("lblAutoEnable").innerText = myObj["autoEnabled"] ? "Activado" : "Apagado/Encendido manual de la bomba"
+    document.getElementById("swtAutoEnable").checked = myObj["autoEnabled"]
 }
+
+
+setInterval(() => {
+    websocket.send("getValues")
+},2000)
+
+document.getElementById("swtAutoEnable").addEventListener("change", (e) => {
+    if(e.currentTarget.checked){
+        document.getElementById("swtToggleWaterPump").disabled = true;
+        websocket.send("autoEnabled")
+    }
+
+    if(!e.currentTarget.checked){
+        document.getElementById("swtToggleWaterPump").disabled = false;
+        websocket.send("autoDisabled")
+    }
+})
+
+document.getElementById("swtToggleWaterPump").addEventListener("change", (e) => {
+    if (e.currentTarget.checked) {
+        websocket.send("turnOnPump")
+    }
+
+    if (!e.currentTarget.checked) {
+        websocket.send("turnOffPump")
+    }
+})
